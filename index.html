@@ -334,7 +334,7 @@ footer{text-align:center;padding:16px 0 26px;border-top:3px solid #D52B1E;margin
     <p id="dlD">Descarga el archivo Excel.</p>
     <button class="btn bsu" onclick="dl()">⬇ Descargar .xlsx</button>
   </div>
-  <div style="margin-top:11px;"><button class="btn bs bsm" onclick="resetApp()">↺ Nuevo</button></div>
+  <div style="margin-top:11px;display:flex;gap:8px;flex-wrap:wrap;"><button class="btn bg bsm" onclick="nuevoCertificado()">↺ Nuevo certificado</button><button class="btn bs bsm" onclick="if(confirm('¿Reiniciar todo? Se borrarán las bases cargadas.'))resetApp()">⏏ Reiniciar todo</button></div>
   <p style="font-size:.64rem;color:var(--sl2);margin-top:9px;line-height:1.6;">✔ Procesado 100% en tu navegador · ✔ Ningún dato sale de tu computador</p>
 </div>
 </main>
@@ -1065,7 +1065,37 @@ function switchTab(tab){
 // DESCARGA / RESET
 // ═══════════════════════════════════════════════════════
 function dl(){if(!xlsxB)return;var blob=new Blob([xlsxB],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});var url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=gFn;a.click();URL.revokeObjectURL(url);}
-function resetApp(){pays=[];xlsxB=null;tplAB=null;["iR","iF","iC","iE","iI"].forEach(function(id){document.getElementById(id).value="";});document.getElementById("fT").value="";document.getElementById("fnT").textContent="sin cargar";document.getElementById("uzT").classList.remove("ok");show("p2");setStep(2);}
+function nuevoCertificado(){
+  // Limpia SOLO el becario actual y vuelve al paso 2 manteniendo las bases cargadas
+  pays=[];xlsxB=null;
+  ["iR","iF","iC","iE","iI"].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value="";
+  });
+  // Limpiar resultado de búsqueda
+  var bc=document.getElementById("bcI");if(bc)bc.innerHTML="";
+  var bcW=document.getElementById("bcW");if(bcW)bcW.classList.add("hidden");
+  var p3t=document.getElementById("tB");if(p3t)p3t.innerHTML="";
+  window._becData=null;
+  show("p2");setStep(2);
+}
+function resetApp(){
+  // Reset COMPLETO: limpia bases y vuelve al paso 1
+  DB=[];pays=[];xlsxB=null;ok1=false;ok2=false;
+  ["iR","iF","iC","iE","iI"].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value="";
+  });
+  // Resetear indicadores de bases cargadas
+  ["fnB1","fnB2"].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.textContent="sin cargar";
+  });
+  ["uzB1","uzB2"].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.classList.remove("ok");
+  });
+  var bc=document.getElementById("bcI");if(bc)bc.innerHTML="";
+  var bcW=document.getElementById("bcW");if(bcW)bcW.classList.add("hidden");
+  window._becData=null;
+  show("p1");setStep(1);
+}
 </script>
 </body>
 </html>
