@@ -217,7 +217,7 @@ footer{text-align:center;padding:16px 0 26px;border-top:3px solid #D52B1E;margin
 <!-- P1: CARGAR BASES -->
 <div id="p1" class="panel">
   <div class="pt">Paso 1 — Cargar Bases de Datos</div>
-  <div class="pd">Sube los dos archivos Excel de pagos (2009–2013 y 2014–2022). Todo se procesa localmente.</div>
+  <div class="pd">Sube los archivos Excel de pagos. Todo se procesa localmente en tu navegador.</div>
   <div class="ugrid">
     <div class="uz" id="uz1"><input type="file" id="f1" accept=".xlsx" onchange="loadBase(1,this)"/>
       <div class="ui">📊</div><div class="ut">Base 2009–2013</div>
@@ -225,6 +225,9 @@ footer{text-align:center;padding:16px 0 26px;border-top:3px solid #D52B1E;margin
     <div class="uz" id="uz2"><input type="file" id="f2" accept=".xlsx" onchange="loadBase(2,this)"/>
       <div class="ui">📊</div><div class="ut">Base 2014–2022</div>
       <div class="ud">…Pagos_Acumulados_2014_al_2022…</div><div class="un" id="fn2">sin cargar</div></div>
+    <div class="uz" id="uz3"><input type="file" id="f3" accept=".xlsx" onchange="loadBase(3,this)"/>
+      <div class="ui">📊</div><div class="ut">Base 2023 en adelante</div>
+      <div class="ud">…Pagos_Acumulados_2023_al_2025…</div><div class="un" id="fn3">sin cargar</div></div>
   </div>
   <div id="p1Prg" class="hidden"><div id="p1Msg" class="ai"></div><div class="pw"><div class="pb" id="p1Bar"></div></div></div>
   <div id="p1Err" class="ae hidden"></div>
@@ -357,7 +360,7 @@ footer{text-align:center;padding:16px 0 26px;border-top:3px solid #D52B1E;margin
 // ESTADO
 // ═══════════════════════════════════════════════════════
 var DB=[],pays=[],tplAB=null,xlsxB=null,gFn="certificado.xlsx";
-var ok1=false,ok2=false;
+var ok1=false,ok2=false,ok3=false;
 
 // ═══════════════════════════════════════════════════════
 // SCHEMAS (índices 0-based verificados en los archivos)
@@ -667,10 +670,10 @@ function loadBase(num,inp){
           }
         });
         bar.style.width="100%";
-        if(num===1)ok1=true;else ok2=true;
+        if(num===1)ok1=true;else if(num===2)ok2=true;else ok3=true;
         document.getElementById("uz"+num).classList.add("ok");
         document.getElementById("dbSt").textContent="DB: "+DB.length.toLocaleString("es-CL")+" reg.";
-        msg.textContent=(ok1?"✅":"⏳")+" Base 1  "+(ok2?"✅":"⏳")+" Base 2  · "+DB.length.toLocaleString("es-CL")+" registros";
+        msg.textContent=(ok1?"✅":"⏳")+" Base 1  "+(ok2?"✅":"⏳")+" Base 2  "+(ok3?"✅":"(opcional)")+" Base 3  · "+DB.length.toLocaleString("es-CL")+" registros";
         document.getElementById("btnS1").disabled=false;
       }catch(err){
         document.getElementById("p1Err").textContent="Error: "+err.message;
@@ -1080,15 +1083,15 @@ function nuevoCertificado(){
 }
 function resetApp(){
   // Reset COMPLETO: limpia bases y vuelve al paso 1
-  DB=[];pays=[];xlsxB=null;ok1=false;ok2=false;
+  DB=[];pays=[];xlsxB=null;ok1=false;ok2=false;ok3=false;
   ["iR","iF","iC","iE","iI"].forEach(function(id){
     var el=document.getElementById(id);if(el)el.value="";
   });
   // Resetear indicadores de bases cargadas
-  ["fnB1","fnB2"].forEach(function(id){
+  ["fnB1","fnB2","fn1","fn2","fn3"].forEach(function(id){
     var el=document.getElementById(id);if(el)el.textContent="sin cargar";
   });
-  ["uzB1","uzB2"].forEach(function(id){
+  ["uzB1","uzB2","uz1","uz2","uz3"].forEach(function(id){
     var el=document.getElementById(id);if(el)el.classList.remove("ok");
   });
   var bc=document.getElementById("bcI");if(bc)bc.innerHTML="";
