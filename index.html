@@ -206,7 +206,25 @@ footer{text-align:center;padding:16px 0 26px;border-top:3px solid #D52B1E;margin
   <span id="dbSt" style="font-size:.65rem;color:var(--sl2);">sin datos</span>
 </header>
 <main>
-<div class="stepper">
+<!-- P0: SELECTOR DE MODO -->
+<div id="p0" class="panel" style="max-width:600px;margin:40px auto;text-align:center;">
+  <div style="font-size:1.5rem;font-weight:700;color:var(--t1);margin-bottom:8px;">Generador de Certificados de Deuda</div>
+  <div style="color:var(--sl1);font-size:.9rem;margin-bottom:32px;">Selecciona el tipo de beca para comenzar</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <button onclick="setMode('chile')" style="padding:28px 16px;border:2px solid var(--blue);border-radius:12px;background:var(--b2);color:var(--t1);cursor:pointer;transition:all .2s;font-size:1rem;font-weight:700;">
+      🌍<br><span style="font-size:1.2rem;">Becas Chile</span><br>
+      <span style="font-size:.75rem;font-weight:400;color:var(--sl1);margin-top:6px;display:block;">Bases 2009–2013, 2014–2022, 2023+</span>
+    </button>
+    <button onclick="setMode('nacionales')" style="padding:28px 16px;border:2px solid var(--blue);border-radius:12px;background:var(--b2);color:var(--t1);cursor:pointer;transition:all .2s;font-size:1rem;font-weight:700;">
+      🇨🇱<br><span style="font-size:1.2rem;">Becas Nacionales</span><br>
+      <span style="font-size:.75rem;font-weight:400;color:var(--sl1);margin-top:6px;display:block;">Bases 2007–2008, 2009–2013, 2014–2022</span>
+    </button>
+  </div>
+</div>
+
+<!-- CONTENEDOR BECAS CHILE -->
+<div id="modeChile" style="display:none;">
+<div class="stepper" id="stepperChile" style="display:none;">
   <div class="step active" id="s1"><div class="sn">1</div><div class="sl">Cargar<br>bases</div></div>
   <div class="step" id="s2"><div class="sn">2</div><div class="sl">Buscar<br>becario</div></div>
   <div class="step" id="s3"><div class="sn">3</div><div class="sl">Revisar<br>pagos</div></div>
@@ -215,23 +233,17 @@ footer{text-align:center;padding:16px 0 26px;border-top:3px solid #D52B1E;margin
 </div>
 
 <!-- P1: CARGAR BASES -->
-<div id="p1" class="panel">
+<div id="p1" class="panel hidden">
   <div class="pt">Paso 1 — Cargar Bases de Datos</div>
-  <div class="pd">Sube los archivos Excel de pagos. Todo se procesa localmente en tu navegador.</div>
-  <div class="ugrid">
-    <div class="uz" id="uz1"><input type="file" id="f1" accept=".xlsx" onchange="loadBase(1,this)"/>
-      <div class="ui">📊</div><div class="ut">Base 2009–2013</div>
-      <div class="ud">…Pagos_Acumulados_2009_al_2013…</div><div class="un" id="fn1">sin cargar</div></div>
-    <div class="uz" id="uz2"><input type="file" id="f2" accept=".xlsx" onchange="loadBase(2,this)"/>
-      <div class="ui">📊</div><div class="ut">Base 2014–2022</div>
-      <div class="ud">…Pagos_Acumulados_2014_al_2022…</div><div class="un" id="fn2">sin cargar</div></div>
-    <div class="uz" id="uz3"><input type="file" id="f3" accept=".xlsx" onchange="loadBase(3,this)"/>
-      <div class="ui">📊</div><div class="ut">Base 2023 en adelante</div>
-      <div class="ud">…Pagos_Acumulados_2023_al_2025…</div><div class="un" id="fn3">sin cargar</div></div>
-  </div>
+  <div class="pd">Sube los archivos Excel de pagos. Puedes agregar tantas bases como necesites. Todo se procesa localmente.</div>
+  <div class="ugrid" id="gridChile"></div>
+  <button class="btn bs" style="margin-bottom:10px;" onclick="addBaseSlot('chile')">＋ Agregar base</button>
   <div id="p1Prg" class="hidden"><div id="p1Msg" class="ai"></div><div class="pw"><div class="pb" id="p1Bar"></div></div></div>
   <div id="p1Err" class="ae hidden"></div>
-  <button class="btn bp" id="btnS1" onclick="fin1()" disabled>Continuar →</button>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+    <button class="btn bs bsm" onclick="setModeBack()">← Cambiar tipo</button>
+    <button class="btn bp" id="btnS1" onclick="fin1()" disabled>Continuar →</button>
+  </div>
 </div>
 
 <!-- P2: BUSCAR -->
@@ -340,6 +352,129 @@ footer{text-align:center;padding:16px 0 26px;border-top:3px solid #D52B1E;margin
   <div style="margin-top:11px;display:flex;gap:8px;flex-wrap:wrap;"><button class="btn bg bsm" onclick="nuevoCertificado()">↺ Nuevo certificado</button><button class="btn bs bsm" onclick="if(confirm('¿Reiniciar todo? Se borrarán las bases cargadas.'))resetApp()">⏏ Reiniciar todo</button></div>
   <p style="font-size:.64rem;color:var(--sl2);margin-top:9px;line-height:1.6;">✔ Procesado 100% en tu navegador · ✔ Ningún dato sale de tu computador</p>
 </div>
+
+</div><!-- /modeChile -->
+
+<!-- CONTENEDOR BECAS NACIONALES -->
+<div id="modeNac" style="display:none;">
+
+<div class="stepper" id="stepperNac" style="display:none;">
+  <div class="step active" id="sn1"><div class="sn">1</div><div class="sl">Cargar<br>bases</div></div>
+  <div class="step" id="sn2"><div class="sn">2</div><div class="sl">Buscar<br>becario</div></div>
+  <div class="step" id="sn3"><div class="sn">3</div><div class="sl">Revisar<br>pagos</div></div>
+  <div class="step" id="sn4"><div class="sn">4</div><div class="sl">Opciones<br>y generar</div></div>
+  <div class="step" id="sn5"><div class="sn">5</div><div class="sl">Descargar</div></div>
+</div>
+
+<!-- PN1: CARGAR BASES NACIONALES -->
+<div id="pn1" class="panel hidden">
+  <div class="pt">Paso 1 — Cargar Bases de Datos (Becas Nacionales)</div>
+  <div class="pd">Sube los archivos Excel de pagos Becas Nacionales. Puedes agregar tantas bases como necesites.</div>
+  <div class="ugrid" id="gridNac"></div>
+  <button class="btn bs" style="margin-bottom:10px;" onclick="addBaseSlot('nac')">＋ Agregar base</button>
+  <div id="pn1Prg" class="hidden"><div id="pn1Msg" class="ai"></div><div class="pw"><div class="pb" id="pn1Bar"></div></div></div>
+  <div id="pn1Err" class="ae hidden"></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+    <button class="btn bs bsm" onclick="setModeBack()">← Cambiar tipo</button>
+    <button class="btn bp" id="btnSn1" onclick="finNac1()" disabled>Continuar →</button>
+  </div>
+</div>
+
+<!-- PN2: BUSCAR BECARIO -->
+<div id="pn2" class="panel hidden">
+  <div class="pt">Paso 2 — Buscar Becario</div>
+  <div class="pd">Busca por RUT (sin puntos, sin guión) o por Folio de beca.</div>
+  <div class="fr">
+    <div class="fg"><label>RUT (solo números)</label><input type="text" id="iRn" placeholder="ej: 12345678"/></div>
+    <div class="fg"><label>Folio beca</label><input type="text" id="iFn" placeholder="ej: 76180030"/></div>
+  </div>
+  <div id="pn2Err" class="ae hidden"></div>
+  <div id="bcNacI" class="hidden"></div>
+  <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;">
+    <button class="btn bs bsm" onclick="setModeBack()">← Cambiar tipo</button>
+    <button class="btn bp" onclick="buscarNac()">🔍 Buscar</button>
+  </div>
+</div>
+
+<!-- PN3: REVISAR PAGOS -->
+<div id="pn3" class="panel hidden">
+  <div class="pt">Paso 3 — Revisar y Seleccionar Pagos</div>
+  <div class="pd" style="margin-bottom:8px;">Selecciona los pagos a incluir. Puedes editar montos.</div>
+  <div style="overflow-x:auto;">
+    <table id="tBN" class="tbl">
+      <thead><tr>
+        <th><input type="checkbox" id="chkAN" onchange="selAN(this.checked)"/></th>
+        <th>#</th><th>Mes Pago</th><th>Año</th><th>Detalle</th>
+        <th>Concepto</th><th>Monto $ (CLP)</th><th>Total desemb. $ (I)</th><th></th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div id="pn3Tot" style="margin-top:8px;font-size:.8rem;color:var(--sl1);"></div>
+  <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;">
+    <button class="btn bs bsm" onclick="back(2,'nac')">← Volver</button>
+    <button class="btn bp" onclick="goNac4()">Continuar →</button>
+    <button class="btn bs" onclick="addRN()">+ Fila</button>
+  </div>
+</div>
+
+<!-- PN4: OPCIONES NACIONALES -->
+<div id="pn4" class="panel hidden">
+  <div class="pt">Paso 4 — Opciones y Configuración</div>
+  <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--sl3);">
+    <button id="tabOpcN" onclick="switchTabN('opc')" style="padding:7px 18px;border:none;background:var(--b1);color:var(--t1);font-weight:700;border-bottom:3px solid var(--ac);cursor:pointer;font-size:.85rem;">⚙️ Opciones</button>
+    <button id="tabCfgN" onclick="switchTabN('cfg')" style="padding:7px 18px;border:none;background:transparent;color:var(--sl1);font-weight:500;border-bottom:3px solid transparent;cursor:pointer;font-size:.85rem;">📝 Configuración</button>
+  </div>
+  <div id="panelOpcN">
+    <div class="fr">
+      <div class="fg"><label>N° Certificado</label><input type="text" id="iCn" placeholder="ej: 42"/></div>
+      <div class="fg"><label>N° Expediente/TED</label><input type="text" id="iEn" placeholder="ej: E4794-2026"/></div>
+      <div class="fg"><label>Iniciales</label><input type="text" id="iIn" placeholder="ej: FRA/PTF"/></div>
+    </div>
+    <div id="pn4Err" class="ae hidden"></div>
+    <div id="pn4Inf" class="ai hidden"></div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;">
+      <button class="btn bs bsm" onclick="back(3,'nac')">← Volver</button>
+      <button class="btn bg" id="btnGn" onclick="genNac()"><span id="spGn" class="sp hidden"></span>⚙️ Generar</button>
+    </div>
+  </div>
+  <div id="panelCfgN" style="display:none;">
+    <div class="pd" style="margin-top:0;color:var(--sl1);">Configuración compartida con Becas Chile.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;margin-bottom:16px;">
+      <div class="fg"><label>Título del certificado</label><input type="text" id="cfgTituloN" placeholder="CERTIFICADO DE CALCULO DE DEUDA DE BECARIO"/></div>
+      <div class="fg"><label>Ciudad</label><input type="text" id="cfgCiudadN" placeholder="Santiago"/></div>
+      <div class="fg"><label>Nombre del firmante</label><input type="text" id="cfgFirmanteN" placeholder="RAÚL MUÑOZ MEDINA"/></div>
+      <div class="fg"><label>Cargo del firmante</label><input type="text" id="cfgCargoN" placeholder="Jefe Departamento de Finanzas"/></div>
+      <div class="fg"><label>Institución</label><input type="text" id="cfgInstitucionN" placeholder="ANID"/></div>
+    </div>
+    <div class="fg" style="margin-bottom:10px;">
+      <label>Nota al pie</label>
+      <textarea id="cfgNotaN" rows="4" style="width:100%;font-size:.82rem;padding:7px;border:1px solid var(--sl3);border-radius:6px;resize:vertical;background:var(--b2);color:var(--t1);"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+      <button class="btn bg" onclick="saveCfg()">💾 Guardar configuración</button>
+      <button class="btn bs" onclick="resetCfg()">↺ Restaurar valores por defecto</button>
+    </div>
+    <div id="cfgMsgN" class="ai hidden" style="margin-top:8px;"></div>
+  </div>
+</div>
+
+<!-- PN5: DESCARGAR -->
+<div id="pn5" class="panel hidden">
+  <div style="text-align:center;padding:20px 0;">
+    <div style="font-size:2.2rem;margin-bottom:8px;">✅</div>
+    <div style="font-weight:700;font-size:1rem;margin-bottom:4px;">Certificado generado</div>
+    <div id="dlDN" style="font-size:.8rem;color:var(--sl1);margin-bottom:16px;"></div>
+    <button class="btn bg" onclick="dlNac()">⬇ Descargar .xlsx</button>
+  </div>
+  <div style="margin-top:11px;display:flex;gap:8px;flex-wrap:wrap;">
+    <button class="btn bg bsm" onclick="nuevoCertNac()">↺ Nuevo certificado</button>
+    <button class="btn bs bsm" onclick="if(confirm('¿Reiniciar todo?'))resetNac()">⏏ Reiniciar todo</button>
+  </div>
+  <p style="font-size:.64rem;color:var(--sl2);margin-top:9px;">✓ Procesado 100% en tu navegador · ✓ Ningún dato sale de tu computador</p>
+</div>
+
+</div><!-- /modeNac -->
 </main>
 
 <footer>
@@ -624,66 +759,100 @@ function setStep(n){for(var i=1;i<=5;i++){var el=document.getElementById("s"+i),
 // ═══════════════════════════════════════════════════════
 // CARGAR BASE
 // ═══════════════════════════════════════════════════════
-function loadBase(num,inp){
+// ═══════════════════════════════════════════════════════
+// SISTEMA DE SLOTS DINÁMICOS — BECAS CHILE
+// ═══════════════════════════════════════════════════════
+var chileSlots=0; // contador de slots creados
+
+function addBaseSlot(mode){
+  var isNac=(mode==='nac');
+  var grid=document.getElementById(isNac?'gridNac':'gridChile');
+  var n=isNac?(++nacSlots):(++chileSlots);
+  var uid=isNac?('n'+n):String(n);
+  var div=document.createElement('div');
+  div.className='uz';div.id='uz'+uid;
+  div.innerHTML='<input type="file" id="f'+uid+'" accept=".xlsx" onchange="'
+    +(isNac?'loadBaseNac':'loadBase')+'(\''+uid+'\',this)"/>'
+    +'<div class="ui">📊</div>'
+    +'<div class="ut">Base '+(isNac?'Nacionales ':'Becas Chile ')+n+'</div>'
+    +'<div class="ud">Haz clic o arrastra el archivo .xlsx</div>'
+    +'<div class="un" id="fn'+uid+'">sin cargar</div>'
+    +'<button style="position:absolute;top:4px;right:4px;border:none;background:transparent;color:var(--sl2);cursor:pointer;font-size:.8rem;padding:2px 5px;" '
+    +'onclick="removeSlot(\''+uid+'\',\''+mode+'\')" title="Quitar">✕</button>';
+  div.style.position='relative';
+  grid.appendChild(div);
+}
+
+function removeSlot(uid,mode){
+  var el=document.getElementById('uz'+uid);if(el)el.remove();
+}
+
+function initSlots(){
+  // Agregar 3 slots por defecto para Chile y 3 para Nacionales
+  for(var i=0;i<3;i++)addBaseSlot('chile');
+  for(var i=0;i<3;i++)addBaseSlot('nac');
+}
+
+function loadBase(uid,inp){
   var file=inp.files[0];if(!file)return;
-  document.getElementById("fn"+num).textContent=file.name;
-  document.getElementById("p1Prg").classList.remove("hidden");
-  document.getElementById("p1Err").classList.add("hidden");
-  var msg=document.getElementById("p1Msg"),bar=document.getElementById("p1Bar");
-  msg.textContent="Leyendo base "+num+" ("+parseFloat(file.size/1024/1024).toFixed(1)+" MB)…";
-  bar.style.width="8%";
+  document.getElementById('fn'+uid).textContent=file.name;
+  document.getElementById('p1Prg').classList.remove('hidden');
+  document.getElementById('p1Err').classList.add('hidden');
+  var msg=document.getElementById('p1Msg'),bar=document.getElementById('p1Bar');
+  msg.textContent='Leyendo '+file.name+' ('+parseFloat(file.size/1024/1024).toFixed(1)+' MB)…';
+  bar.style.width='8%';
   var reader=new FileReader();
   reader.onload=function(e){
-    bar.style.width="30%";msg.textContent="Procesando hojas…";
+    bar.style.width='30%';msg.textContent='Procesando hojas…';
     setTimeout(function(){
       try{
-        var wb=XLSX.read(e.target.result,{type:"array",cellDates:false,raw:true});
+        var wb=XLSX.read(e.target.result,{type:'array',cellDates:false,raw:true});
         var cnt=0;
         wb.SheetNames.forEach(function(sn){
-          var ws=wb.Sheets[sn];if(!ws["!ref"])return;
-          var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:""});
+          var ws=wb.Sheets[sn];if(!ws['!ref'])return;
+          var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
           if(!rows.length)return;
-          var cols=detectSchema(rows[0],schema(num,sn));
+          var cols=detectSchema(rows[0],SC); // SC es el schema 2014+ que detectSchema ya maneja bien
           for(var i=1;i<rows.length;i++){
             var r=rows[i];if(!r||r.length<10)continue;
-            var rut=parseInt(String(r[cols.rut]).replace(/[^0-9]/g,""))||0;
+            var rut=parseInt(String(r[cols.rut]).replace(/[^0-9]/g,''))||0;
             if(!rut||rut<=0)continue;
             var mu=parseFloat(r[cols.musd]),mp=parseFloat(r[cols.mpesos]);
             if(isNaN(mu))mu=null;if(isNaN(mp))mp=null;
-            // Keep negatives in DB (filtered later by RUT logic)
             DB.push({
-              folio:String(r[cols.folio]||"").trim().replace(/\.0$/,""),
-              anio:String(r[cols.anio]||"").replace(/\.0$/,"").trim(),
-              mes:String(r[cols.mes]||"").trim().toUpperCase(),
-              concepto:String(r[cols.concepto]||"").trim(),
-              periodo:cols.periodo!==null?String(r[cols.periodo]||"").trim():"",
+              folio:String(r[cols.folio]||'').trim().replace(/\.0$/,''),
+              anio:String(r[cols.anio]||'').replace(/\.0$/,'').trim(),
+              mes:String(r[cols.mes]||'').trim().toUpperCase(),
+              concepto:String(r[cols.concepto]||'').trim(),
+              periodo:cols.periodo!==null?String(r[cols.periodo]||'').trim():'',
               rut:rut,
-              dv:String(r[cols.dv]||"").trim().replace(/\.0$/,""),
-              nombres:String(r[cols.nombres]||"").trim(),
-              ap:String(r[cols.ap]||"").trim(),
-              am:String(r[cols.am]||"").trim(),
-              univ:cols.univ!==null?String(r[cols.univ]||"").trim():"",
-              instrumento:cols.instrumento!=null&&r[cols.instrumento]?String(r[cols.instrumento]||"").trim():"",
+              dv:String(r[cols.dv]||'').trim().replace(/\.0$/,''),
+              nombres:String(r[cols.nombres]||'').trim(),
+              ap:String(r[cols.ap]||'').trim(),
+              am:String(r[cols.am]||'').trim(),
+              univ:cols.univ!==null?String(r[cols.univ]||'').trim():'',
+              instrumento:cols.instrumento!=null&&r[cols.instrumento]?String(r[cols.instrumento]||'').trim():'',
               musd:mu,mpesos:mp!==null?Math.round(mp):null
             });
             cnt++;
           }
         });
-        bar.style.width="100%";
-        if(num===1)ok1=true;else if(num===2)ok2=true;else ok3=true;
-        document.getElementById("uz"+num).classList.add("ok");
-        document.getElementById("dbSt").textContent="DB: "+DB.length.toLocaleString("es-CL")+" reg.";
-        msg.textContent=(ok1?"✅":"⏳")+" Base 1  "+(ok2?"✅":"⏳")+" Base 2  "+(ok3?"✅":"(opcional)")+" Base 3  · "+DB.length.toLocaleString("es-CL")+" registros";
-        document.getElementById("btnS1").disabled=false;
+        bar.style.width='100%';
+        document.getElementById('uz'+uid).classList.add('ok');
+        document.getElementById('dbSt').textContent='DB: '+DB.length.toLocaleString('es-CL')+' reg.';
+        msg.textContent='✅ '+file.name+' cargado · '+DB.length.toLocaleString('es-CL')+' registros totales';
+        document.getElementById('btnS1').disabled=false;
       }catch(err){
-        document.getElementById("p1Err").textContent="Error: "+err.message;
-        document.getElementById("p1Err").classList.remove("hidden");
-        bar.style.width="0%";
+        document.getElementById('p1Err').textContent='Error: '+err.message;
+        document.getElementById('p1Err').classList.remove('hidden');
+        bar.style.width='0%';
       }
     },60);
   };
   reader.readAsArrayBuffer(file);
 }
+
+
 function fin1(){if(!DB.length){document.getElementById("p1Err").textContent="Carga al menos una base.";document.getElementById("p1Err").classList.remove("hidden");return;}show("p2");setStep(2);}
 
 // ═══════════════════════════════════════════════════════
@@ -1097,7 +1266,469 @@ function resetApp(){
   var bc=document.getElementById("bcI");if(bc)bc.innerHTML="";
   var bcW=document.getElementById("bcW");if(bcW)bcW.classList.add("hidden");
   window._becData=null;
+  // Reiniciar slots de carga
+  chileSlots=0;document.getElementById('gridChile').innerHTML='';
+  for(var _i=0;_i<3;_i++)addBaseSlot('chile');
   show("p1");setStep(1);
+}
+
+
+// ═══════════════════════════════════════════════════════
+// MODO: SELECTOR (Becas Chile / Becas Nacionales)
+// ═══════════════════════════════════════════════════════
+var currentMode=null;
+// Inicializar slots al cargar la página
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initSlots);}else{initSlots();}
+function setMode(mode){
+  currentMode=mode;
+  document.getElementById('p0').style.display='none';
+  document.getElementById('modeChile').style.display=(mode==='chile'?'':'none');
+  document.getElementById('modeNac').style.display=(mode==='nacionales'?'':'none');
+  if(mode==='chile'){
+    document.getElementById('stepperChile').style.display='';
+    document.getElementById('stepperNac').style.display='none';
+    show('p1');setStep(1);
+  } else {
+    document.getElementById('stepperNac').style.display='';
+    document.getElementById('stepperChile').style.display='none';
+    showNac('pn1');setStepNac(1);
+  }
+}
+function setModeBack(){
+  document.getElementById('p0').style.display='';
+  document.getElementById('modeChile').style.display='none';
+  document.getElementById('modeNac').style.display='none';
+  document.getElementById('stepperChile').style.display='none';
+  document.getElementById('stepperNac').style.display='none';
+  currentMode=null;
+}
+
+// ═══════════════════════════════════════════════════════
+// BECAS NACIONALES — STEPPER
+// ═══════════════════════════════════════════════════════
+function showNac(id){['pn1','pn2','pn3','pn4','pn5'].forEach(function(p){var el=document.getElementById(p);if(el)el.className=p===id?'panel':'panel hidden';});}
+function setStepNac(n){for(var i=1;i<=5;i++){var el=document.getElementById('sn'+i);if(!el)continue;var nm=el.querySelector('.sn');el.className='step';if(i<n){el.className='step done';nm.textContent='✓';}else if(i===n){el.className='step active';nm.textContent=String(i);}else nm.textContent=String(i);}}
+function goNac4(){if(!paysNac.length){return;}showNac('pn4');setStepNac(4);}
+function back(n,mode){if(mode==='nac'){showNac('pn'+n);setStepNac(n);}else{show('p'+n);setStep(n);}}
+function switchTabN(tab){
+  var isOpc=(tab==='opc');
+  document.getElementById('panelOpcN').style.display=isOpc?'':'none';
+  document.getElementById('panelCfgN').style.display=isOpc?'none':'';
+  document.getElementById('tabOpcN').style.cssText='padding:7px 18px;border:none;background:var(--b1);color:var(--t1);font-weight:'+(isOpc?'700':'500')+';border-bottom:3px solid '+(isOpc?'var(--ac)':'transparent')+';cursor:pointer;font-size:.85rem;';
+  document.getElementById('tabCfgN').style.cssText='padding:7px 18px;border:none;background:transparent;color:'+(isOpc?'var(--sl1)':'var(--t1)')+';font-weight:'+(isOpc?'500':'700')+';border-bottom:3px solid '+(isOpc?'transparent':'var(--ac)')+';cursor:pointer;font-size:.85rem;';
+  if(!isOpc){loadCfgFields();document.getElementById('cfgTituloN').value=document.getElementById('cfgTitulo').value;document.getElementById('cfgCiudadN').value=document.getElementById('cfgCiudad').value;document.getElementById('cfgFirmanteN').value=document.getElementById('cfgFirmante').value;document.getElementById('cfgCargoN').value=document.getElementById('cfgCargo').value;document.getElementById('cfgInstitucionN').value=document.getElementById('cfgInstitucion').value;document.getElementById('cfgNotaN').value=document.getElementById('cfgNota').value;}
+}
+
+// ═══════════════════════════════════════════════════════
+// BECAS NACIONALES — BASE DE DATOS
+// ═══════════════════════════════════════════════════════
+var DBnac=[], paysNac=[], xlsxBnac=null, gFnNac='certificado_nacional.xlsx';
+var okn1=false, okn2=false, okn3=false;
+var nacSlots=0;
+
+// Esquemas para las 3 bases nacionales
+// SN1: 2007-2008: folio(0), mes(1), concepto(4), rut(7), ap(9), am(10), nombres(11), mpesos(6)
+// SN2: 2009-2013: mes(0), concepto(3), rut(6), ap(8), am(9), nombres(10), mpesos(5)
+// SN3: 2014-2022: idéntico a SC de Becas Chile
+var SN1={folio:0,anio:-1,mes:1,concepto:4,rut:7,dv:-1,nombres:11,ap:9,am:10,univ:-1,musd:-1,mpesos:6,periodo:-1};
+var SN2={folio:-1,anio:-1,mes:0,concepto:3,rut:6,dv:-1,nombres:10,ap:8,am:9,univ:-1,musd:-1,mpesos:5,periodo:-1};
+var SN3={folio:0,anio:1,mes:2,periodo:10,concepto:11,rut:13,dv:14,nombres:15,ap:16,am:17,univ:24,musd:25,mpesos:27,instrumento:3};
+
+function schemaNac(num){if(num===1)return SN1;if(num===2)return SN2;return SN3;}
+
+function loadBaseNac(uid,inp){
+  var file=inp.files[0];if(!file)return;
+  document.getElementById('fn'+uid).textContent=file.name;
+  document.getElementById('pn1Prg').classList.remove('hidden');
+  document.getElementById('pn1Err').classList.add('hidden');
+  var msg=document.getElementById('pn1Msg'),bar=document.getElementById('pn1Bar');
+  msg.textContent='Leyendo '+file.name+' ('+parseFloat(file.size/1024/1024).toFixed(1)+' MB)…';
+  bar.style.width='8%';
+  var reader=new FileReader();
+  reader.onload=function(e){
+    bar.style.width='30%';msg.textContent='Procesando hojas…';
+    setTimeout(function(){
+      try{
+        var wb=XLSX.read(e.target.result,{type:'array',cellDates:false,raw:true});
+        wb.SheetNames.forEach(function(sn){
+          var ws=wb.Sheets[sn];if(!ws['!ref'])return;
+          var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+          if(!rows.length)return;
+          // Detectar esquema automáticamente por encabezados
+          var usedCols=detectSchemaNac(rows[0]);
+          var sheetYear=parseInt(sn)||null;
+          for(var i=1;i<rows.length;i++){
+            var r=rows[i];if(!r||r.length<4)continue;
+            var rutRaw=usedCols.rut>=0?String(r[usedCols.rut]||'').replace(/[^0-9]/g,''):'';
+            var rut=parseInt(rutRaw)||0;if(!rut||rut<=0)continue;
+            var dv=usedCols.dv>=0?String(r[usedCols.dv]||'').trim().replace(/\.0$/,''):'';
+            if(!dv){var rv=String(usedCols.rut>=0?r[usedCols.rut]||'':'');var dm=rv.match(/-([0-9Kk])$/);if(dm)dv=dm[1].toUpperCase();}
+            var mp=usedCols.mpesos>=0?parseFloat(r[usedCols.mpesos]):NaN;if(isNaN(mp))mp=null;
+            var mu=usedCols.musd>=0?parseFloat(r[usedCols.musd]):NaN;if(isNaN(mu))mu=null;
+            var folio=usedCols.folio>=0?String(r[usedCols.folio]||'').trim().replace(/\.0$/,''):'';
+            var anio=usedCols.anio>=0?String(r[usedCols.anio]||'').replace(/\.0$/,'').trim():(sheetYear?String(sheetYear):'');
+            var mes=String(r[usedCols.mes]||'').trim().toUpperCase();if(!mes)continue;
+            DBnac.push({
+              folio:folio,anio:anio,mes:mes,
+              concepto:String(r[usedCols.concepto]||'').trim(),
+              periodo:usedCols.periodo>=0?String(r[usedCols.periodo]||'').trim():'',
+              rut:rut,dv:dv,
+              nombres:String(r[usedCols.nombres]||'').trim(),
+              ap:usedCols.ap>=0?String(r[usedCols.ap]||'').trim():'',
+              am:usedCols.am>=0?String(r[usedCols.am]||'').trim():'',
+              univ:usedCols.univ>=0?String(r[usedCols.univ]||'').trim():'',
+              musd:mu,mpesos:mp!==null?Math.round(mp):null
+            });
+          }
+        });
+        bar.style.width='100%';
+        document.getElementById('uz'+uid).classList.add('ok');
+        msg.textContent='✅ '+file.name+' cargado · '+DBnac.length.toLocaleString('es-CL')+' registros totales';
+        document.getElementById('btnSn1').disabled=false;
+      }catch(err){
+        document.getElementById('pn1Err').textContent='Error: '+err.message;
+        document.getElementById('pn1Err').classList.remove('hidden');
+        bar.style.width='0%';
+      }
+    },60);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// Detección automática de esquema para Becas Nacionales (3 formatos distintos)
+function detectSchemaNac(headerRow){
+  var H=headerRow.map(function(x){return String(x||'').trim().toLowerCase();});
+  function find(){var pats=[].slice.call(arguments);for(var i=0;i<H.length;i++)for(var p=0;p<pats.length;p++)if(H[i].indexOf(pats[p])>=0)return i;return -1;}
+  // ¿Tiene columnas de Becas Chile (2014-2022)?
+  if(find('proyecto o beca')>=0||find('mes de pago')>=0){
+    return detectSchema(headerRow, SC); // reutilizar detectSchema de Becas Chile
+  }
+  // Formato 2007-2008: tiene columna "folio" en pos 0
+  if(H[0]==='folio'||H[0].indexOf('folio')===0){
+    return {folio:0,anio:-1,mes:1,concepto:4,rut:7,dv:-1,nombres:11,ap:9,am:10,univ:-1,musd:-1,mpesos:6,periodo:-1};
+  }
+  // Formato 2009-2013: empieza con "mes de la transferencia"
+  return {folio:-1,anio:-1,mes:0,concepto:3,rut:6,dv:-1,nombres:10,ap:8,am:9,univ:-1,musd:-1,mpesos:5,periodo:-1};
+}
+
+function finNac1(){
+  if(!DBnac.length){document.getElementById('pn1Err').textContent='Carga al menos una base.';document.getElementById('pn1Err').classList.remove('hidden');return;}
+  showNac('pn2');setStepNac(2);
+}
+
+// ═══════════════════════════════════════════════════════
+// BECAS NACIONALES — BÚSQUEDA
+// ═══════════════════════════════════════════════════════
+function buscarNac(){
+  var rutRaw=document.getElementById('iRn').value.trim().replace(/[^0-9]/g,'');
+  var ff=document.getElementById('iFn').value.trim();
+  var errEl=document.getElementById('pn2Err');
+  errEl.classList.add('hidden');
+  if(!rutRaw&&!ff){errEl.textContent='Ingresa RUT o Folio.';errEl.classList.remove('hidden');return;}
+  var rutN=rutRaw?parseInt(rutRaw):null;
+  // Filtrar filas directas
+  var direct=DBnac.filter(function(r){
+    if(rutN&&r.rut===rutN)return true;
+    if(ff&&r.folio&&r.folio===ff)return true;
+    return false;
+  });
+  if(!direct.length){errEl.textContent='No se encontraron registros para ese RUT/Folio.';errEl.classList.remove('hidden');return;}
+  // Recoger todos los folios del becario
+  var fs=new Set(direct.map(function(r){return r.folio;}).filter(Boolean));
+  var found=DBnac.filter(function(r){
+    if(rutN&&r.rut===rutN)return true;
+    if(fs.size&&r.folio&&fs.has(r.folio))return true;
+    return false;
+  });
+  // Cancelar reintegros negativos
+  var neg={};
+  found.forEach(function(r){if((r.mpesos||0)<0){var k=Math.round(Math.abs(r.mpesos||0));neg[k]=(neg[k]||0)+1;}});
+  var filtered=[];
+  found.forEach(function(r){
+    if((r.mpesos||0)>0||(r.musd||0)>0){
+      var k=Math.round(Math.abs(r.mpesos||r.musd||0));
+      if(neg[k]>0){neg[k]--;return;}
+      filtered.push(r);
+    }
+  });
+  if(!filtered.length){errEl.textContent='No se encontraron pagos positivos.';errEl.classList.remove('hidden');return;}
+  // Mostrar info del becario
+  var bec=direct[0];
+  window._becDataNac={
+    nombre:titleCase([bec.nombres,bec.ap,bec.am].filter(Boolean).join(' ')),
+    rut:String(bec.rut)+(bec.dv?'-'+bec.dv:''),
+    univ:titleCase(bec.univ||''),
+    folio:bec.folio||''
+  };
+  var info=document.getElementById('bcNacI');
+  info.innerHTML='<div class="bc-card" style="margin-top:10px;padding:10px 14px;background:var(--b2);border-radius:8px;border:1px solid var(--sl3);">'
+    +'<b>'+escHtml(window._becDataNac.nombre)+'</b>'
+    +(window._becDataNac.rut?'<span style="color:var(--sl1);margin-left:10px;">RUT: '+escHtml(window._becDataNac.rut)+'</span>':'')
+    +(window._becDataNac.univ?'<div style="font-size:.8rem;color:var(--sl1);margin-top:2px;">'+escHtml(window._becDataNac.univ)+'</div>':'')
+    +'<div style="font-size:.78rem;color:var(--sl1);margin-top:2px;">'+filtered.length+' pagos encontrados</div>'
+    +'</div>';
+  info.classList.remove('hidden');
+  // Procesar pagos
+  paysNac=processPaymentsNac(filtered, rutN||0);
+  renderTNac();
+  showNac('pn3');setStepNac(3);
+}
+
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ═══════════════════════════════════════════════════════
+// BECAS NACIONALES — PROCESAMIENTO DE PAGOS
+// Los pagos nacionales son en PESOS, no USD.
+// ═══════════════════════════════════════════════════════
+function processPaymentsNac(rows, becarioRut){
+  // Agrupar por mes+año de pago
+  var groups={}, order=[];
+  rows.forEach(function(r){
+    var key=(r.mes||'')+'_'+(r.anio||'');
+    if(!groups[key]){groups[key]=[];order.push(key);}
+    groups[key].push(r);
+  });
+  // Ordenar cronológicamente
+  order.sort(function(a,b){
+    var ga=groups[a][0],gb=groups[b][0];
+    var ya=parseInt(String(ga.anio).replace(/\D/g,''))||0;
+    var yb=parseInt(String(gb.anio).replace(/\D/g,''))||0;
+    var ma=mesNum(ga.mes||'')||0, mb=mesNum(gb.mes||'')||0;
+    return (ya*100+ma)-(yb*100+mb);
+  });
+  var result=[];
+  order.forEach(function(key){
+    var g=groups[key];
+    // Agrupar por concepto dentro del grupo
+    var subRows=[];
+    g.forEach(function(r){
+      var det=r.concepto||(r.periodo&&r.periodo!=='nan'?r.periodo:'Pago');
+      subRows.push({
+        mes:r.mes,anio:r.anio,
+        det:det.charAt(0).toUpperCase()+det.slice(1).toLowerCase(),
+        mpesos:r.mpesos||0,
+        merge_pesos:null,merge_n:1,
+        _r:r,sel:true
+      });
+    });
+    // Total del grupo en pesos (suma de originales)
+    var totP=0; g.forEach(function(r){totP+=r.mpesos||0;});
+    var n=subRows.length;
+    for(var i=0;i<n;i++){
+      subRows[i].merge_n=n;
+      if(i===0){subRows[i].merge_pesos=Math.round(totP);subRows[i]._grp_first=true;}
+      else subRows[i]._grp_sub=true;
+    }
+    subRows.forEach(function(s){result.push(s);});
+  });
+  return result;
+}
+
+// ═══════════════════════════════════════════════════════
+// BECAS NACIONALES — TABLA
+// ═══════════════════════════════════════════════════════
+function f2n(v){return(v===null||v===undefined||v==='')?'':(Math.round(parseFloat(v)||0)).toLocaleString('es-CL');}
+function renderTNac(){
+  var tb=document.querySelector('#tBN tbody');tb.innerHTML='';
+  paysNac.forEach(function(p,i){
+    var tr=document.createElement('tr');
+    if(p._grp_first&&p.merge_n>1)tr.className='grp-first';
+    else if(p._grp_sub)tr.className='grp-sub';
+    var mergeLabel=p._grp_first&&p.merge_n>1?'<span class="merge-badge">↕'+p.merge_n+'</span>':'';
+    tr.innerHTML='<td><input type="checkbox" class="rc" '+(p.sel?'checked':'')
+      +' onchange="paysNac['+i+'].sel=this.checked;updTNac()"/></td>'
+      +'<td style="color:var(--sl2);font-family:monospace;font-size:.66rem;">'+(i+1)+'</td>'
+      +'<td><input type="text" value="'+escHtml(p.mes||'')+'" style="min-width:78px;" onchange="paysNac['+i+'].mes=this.value"/></td>'
+      +'<td><input type="text" value="'+escHtml(String(p.anio||'').replace(/\.0$/,''))+'" style="min-width:46px;" onchange="paysNac['+i+'].anio=this.value"/></td>'
+      +'<td><input type="text" value="'+escHtml(p.det||'')+'" style="min-width:150px;" onchange="paysNac['+i+'].det=this.value"/>'+mergeLabel+'</td>'
+      +'<td>'+(p._grp_sub?'<span style="color:var(--sl2);font-size:.7rem;">(subcategoría)</span>':'<input type="text" value="'+f2n(p.mpesos)+'" style="min-width:90px;text-align:right;" onchange="paysNac['+i+'].mpesos=parseInt(this.value.replace(/[^0-9-]/g,\'\'))||0"/>')+'</td>'
+      +'<td style="'+(p._grp_sub?'color:var(--sl2);font-style:italic;font-size:.68rem;text-align:center;':'')+'">'+
+        (p._grp_sub?'(combinada)':'<input type="text" value="'+f2n(p.merge_pesos)+'" style="min-width:90px;text-align:right;background:rgba(245,166,35,.08);border-color:rgba(245,166,35,.3);" onchange="paysNac['+i+'].merge_pesos=parseInt(this.value.replace(/[^0-9-]/g,\'\'))||0"/>')
+      +'</td>'
+      +'<td><button class="btn bd2" onclick="paysNac.splice('+i+',1);renderTNac()">✕</button></td>';
+    tb.appendChild(tr);
+  });
+  updTNac();
+}
+function updTNac(){
+  var tot=0;
+  paysNac.forEach(function(x){if(x.sel&&!x._grp_sub)tot+=parseInt(x.merge_pesos)||0;});
+  var el=document.getElementById('pn3Tot');
+  if(el)el.textContent='Total seleccionado: $'+tot.toLocaleString('es-CL');
+}
+function selAN(v){paysNac.forEach(function(p){p.sel=v;});renderTNac();}
+function addRN(){paysNac.push({mes:'',anio:'',det:'',mpesos:0,merge_pesos:0,merge_n:1,sel:true,_grp_first:true,_grp_sub:false});renderTNac();}
+
+// ═══════════════════════════════════════════════════════
+// BECAS NACIONALES — GENERACIÓN EXCEL
+// ═══════════════════════════════════════════════════════
+function genNac(){
+  var errEl=document.getElementById('pn4Err'),infEl=document.getElementById('pn4Inf');
+  errEl.classList.add('hidden');if(infEl)infEl.classList.add('hidden');
+  var sel=paysNac.filter(function(p){return p.sel;});
+  if(!sel.length){errEl.textContent='Sin pagos seleccionados.';errEl.classList.remove('hidden');return;}
+  var btn=document.getElementById('btnGn'),sp=document.getElementById('spGn');
+  btn.disabled=true;sp.classList.remove('hidden');
+  genExcelJSNac(sel).then(function(buf){
+    xlsxBnac=buf;
+    var bd=window._becDataNac||{};
+    var nombre=(bd.nombre||'becario').toUpperCase().replace(/\s+/g,'_');
+    gFnNac='certificado_nacional_'+nombre+'.xlsx';
+    document.getElementById('dlDN').textContent=sel.length+' pagos · '+gFnNac;
+    showNac('pn5');setStepNac(5);
+  }).catch(function(e){
+    errEl.textContent='Error: '+(e&&e.message?e.message:e);errEl.classList.remove('hidden');
+  }).then(function(){btn.disabled=false;sp.classList.add('hidden');});
+}
+
+async function genExcelJSNac(sel){
+  var cfg=getCfg();
+  var nCert=document.getElementById('iCn').value.trim();
+  var ted=document.getElementById('iEn').value.trim();
+  var ini=document.getElementById('iIn').value.trim();
+  var bd=window._becDataNac||{};
+
+  var wb=new ExcelJS.Workbook();wb.creator='ANID';
+  var ws=wb.addWorksheet('nombre');
+
+  ws.columns=[
+    {key:'A',width:3.57},{key:'B',width:26.14},{key:'C',width:11.14},
+    {key:'D',width:35.00},{key:'E',width:18.00},{key:'F',width:14.00},
+    {key:'G',width:14.00},{key:'H',width:18.43}
+  ];
+
+  var THIN={style:'thin',color:{argb:'FF000000'}};
+  var BALL={top:THIN,bottom:THIN,left:THIN,right:THIN};
+  var NUM_FMT='_-* #,##0_-;\-* #,##0_-;_-* "-"??_-;_-@_-';
+
+  function sc(r,c,val,opts){
+    opts=opts||{};var cell=ws.getRow(r).getCell(c);
+    cell.value=(val===undefined||val===null||val==='')?null:val;
+    cell.font={name:'Calibri',size:opts.size||9,bold:opts.bold||false};
+    if(opts.border)cell.border=opts.border;
+    if(opts.align)cell.alignment={horizontal:opts.align,vertical:'middle',wrapText:opts.wrap||false};
+    if(opts.numFmt)cell.numFmt=opts.numFmt;
+    return cell;
+  }
+
+  // Logo ANID
+  var IMG0_B64 = genExcelJS.toString().match(/var IMG0='([^']+)'/);
+  if(IMG0_B64){var i0=wb.addImage({base64:IMG0_B64[1],extension:'png'});ws.addImage(i0,{tl:{col:1,row:0},br:{col:5,row:8},editAs:'absolute'});}
+  for(var r=1;r<=8;r++)ws.getRow(r).height=14;
+  ws.getRow(9).height=6;
+
+  // Título
+  ws.getRow(10).height=20;ws.mergeCells('B10:F10');
+  sc(10,2,cfg.titulo||'CERTIFICADO DE CALCULO DE DEUDA DE BECARIO',{bold:true,size:12,align:'center'});
+  ws.getRow(11).height=16;ws.mergeCells('B11:F11');
+  sc(11,2,nCert?'N° '+nCert:'',{bold:true,size:12,align:'center'});
+
+  // Encabezado
+  var HDR=[[12,'NOMBRE BECARIO:',bd.nombre],[13,'RUT:',bd.rut],[14,'BECA:',''],
+    [15,'UNIVERSIDAD / INSTITUCIÓN:',bd.univ],[16,'PROGRAMA BECA:',''],[17,'PAIS:','Chile'],
+    [18,'Folio Beca:',bd.folio],[19,'Resolución:','XX-XX-XXXX'],
+    [21,'Fecha Inicio Beca:','XX-XX-XXXX'],[22,'Fecha Término Beca:','XX-XX-XXXX'],
+    [23,'Fecha de Retorno:','XX-XX-XXXX'],[24,'Fecha de Grado:','XX-XX-XXXX']];
+  for(var r=12;r<=25;r++)ws.getRow(r).height=15.8;
+  ws.mergeCells('B19:B20');
+  HDR.forEach(function(h){sc(h[0],2,h[1],{bold:true,size:11,align:'left'});sc(h[0],3,h[2]||'',{size:11,align:'left'});});
+  ws.getRow(26).height=6;
+
+  // Cabecera tabla — Becas Nacionales solo tienen montos en PESOS
+  ws.getRow(27).height=20;ws.getRow(28).height=36.8;
+  ws.mergeCells('B27:B28');ws.mergeCells('C27:C28');ws.mergeCells('D27:H27');ws.mergeCells('E27:E28');ws.mergeCells('F27:H27');
+  ws.mergeCells('F27:F28');ws.mergeCells('G27:G28');ws.mergeCells('H27:H28');
+  var TH={bold:true,size:9,border:BALL,align:'center',wrap:true};
+  sc(27,2,'MES DE PAGO',TH);sc(27,3,'AÑO',TH);
+  sc(27,4,'Detalle / Concepto',{bold:false,size:11,border:BALL,align:'center',wrap:true});
+  sc(27,5,'Monto Pagado $',{bold:true,size:9,border:BALL,align:'center',wrap:true,numFmt:NUM_FMT});
+  sc(27,6,'',TH);sc(27,7,'',TH);
+  sc(27,8,'MONTO TOTAL $ CLP',{bold:true,size:9,border:BALL,align:'center',wrap:true,numFmt:NUM_FMT});
+  [2,3,5,6,7,8].forEach(function(c){ws.getRow(28).getCell(c).border=BALL;});
+  sc(28,4,'Descripción del pago',TH);
+
+  // Filas de datos
+  var dStart=29,totPesos=0;
+  sel.forEach(function(p,i){
+    var R=dStart+i;ws.getRow(R).height=16.5;
+    var an=String(p.anio||'').replace(/\.0$/,'').trim();
+    var bD={bold:false,size:9,border:BALL,align:'center'};
+    var bN={bold:false,size:9,border:BALL,align:'right',numFmt:NUM_FMT};
+    sc(R,2,cap(p.mes||''),bD);
+    sc(R,3,an?parseInt(an):null,bD);
+    sc(R,4,cap(p.det||''),{bold:false,size:9,border:BALL,align:'left'});
+    if(!p._grp_sub){
+      var mp=Math.round(p.merge_pesos||0);
+      sc(R,5,Math.round(p.mpesos||0),bN);
+      [6,7].forEach(function(c){sc(R,c,null,bN);});
+      sc(R,8,mp>0?mp:null,bN);
+      if(mp>0)totPesos+=mp;
+      var n=p.merge_n||1;
+      if(n>1)ws.mergeCells(R,8,R+n-1,8);
+    } else {
+      sc(R,5,Math.round(p.mpesos||0),bN);
+      [6,7,8].forEach(function(c){sc(R,c,null,bN);});
+    }
+  });
+
+  // Fila total
+  var fT=dStart+sel.length;ws.getRow(fT).height=16.5;
+  ws.mergeCells('C'+fT+':G'+fT);
+  sc(fT,2,'MONTO TOTAL',{bold:true,size:9,border:BALL,align:'center'});
+  for(var c=3;c<=7;c++)ws.getRow(fT).getCell(c).border=BALL;
+  sc(fT,8,totPesos,{bold:true,size:9,border:BALL,align:'right',numFmt:NUM_FMT});
+
+  // Nota
+  var rNota=fT+2;ws.getRow(rNota).height=60;ws.mergeCells('B'+rNota+':H'+rNota);
+  sc(rNota,2,cfg.nota||'Nota: Los montos corresponden a los pagos realizados en pesos chilenos.',{size:9,align:'left',wrap:true});
+
+  // Santiago + fecha
+  var rSgo=rNota+3;ws.getRow(rSgo).height=15.8;
+  sc(rSgo,2,(cfg.ciudad||'Santiago')+', ',{size:9});
+  var hoy=new Date();
+  var meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  sc(rSgo,3,hoy.getDate()+' de '+meses[hoy.getMonth()]+' de '+hoy.getFullYear(),{size:9});
+
+  // Firma
+  var rF=rSgo+8;ws.getRow(rF).height=15.8;
+  ws.mergeCells('D'+rF+':G'+rF);ws.mergeCells('D'+(rF+1)+':G'+(rF+1));ws.mergeCells('D'+(rF+2)+':G'+(rF+2));
+  sc(rF,4,cfg.firmante||'RAÚL MUÑOZ MEDINA',{bold:true,size:9,align:'center'});
+  sc(rF+1,4,cfg.cargo||'Jefe Departamento de Finanzas',{bold:true,size:9,align:'center'});
+  sc(rF+2,4,cfg.institucion||'ANID',{bold:true,size:9,align:'center'});
+
+  // Iniciales y TED
+  var rIni=rSgo+9;ws.getRow(rIni).height=15.8;
+  sc(rIni,2,ini||'XXX/XXX',{size:9});sc(rIni+1,2,'TED '+(ted||''),{size:9});
+
+  return await wb.xlsx.writeBuffer();
+}
+
+function dlNac(){
+  if(!xlsxBnac)return;
+  var blob=new Blob([xlsxBnac],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  var url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=gFnNac;a.click();URL.revokeObjectURL(url);
+}
+
+function nuevoCertNac(){
+  paysNac=[];xlsxBnac=null;
+  ['iRn','iFn','iCn','iEn','iIn'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  var bc=document.getElementById('bcNacI');if(bc){bc.innerHTML='';bc.classList.add('hidden');}
+  var tb=document.querySelector('#tBN tbody');if(tb)tb.innerHTML='';
+  window._becDataNac=null;
+  showNac('pn2');setStepNac(2);
+}
+
+function resetNac(){
+  DBnac=[];paysNac=[];xlsxBnac=null;okn1=false;okn2=false;okn3=false;
+  ['iRn','iFn','iCn','iEn','iIn'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['fnn1','fnn2','fnn3'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='sin cargar';});
+  ['uzn1','uzn2','uzn3'].forEach(function(id){var el=document.getElementById(id);if(el)el.classList.remove('ok');});
+  window._becDataNac=null;
+  // Reiniciar slots de carga
+  nacSlots=0;document.getElementById('gridNac').innerHTML='';
+  for(var _i=0;_i<3;_i++)addBaseSlot('nac');
+  showNac('pn1');setStepNac(1);
 }
 </script>
 </body>
