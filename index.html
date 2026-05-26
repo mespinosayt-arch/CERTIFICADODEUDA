@@ -807,34 +807,37 @@ function loadBase(uid,inp){
     setTimeout(function(){
       try{
         var wb=XLSX.read(e.target.result,{type:'array',cellDates:false,raw:true});
-        var cnt=0;
         wb.SheetNames.forEach(function(sn){
           var ws=wb.Sheets[sn];if(!ws['!ref'])return;
           var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
           if(!rows.length)return;
-          var cols=detectSchema(rows[0],SC); // SC es el schema 2014+ que detectSchema ya maneja bien
+          // Detectar esquema leyendo los encabezados reales — funciona con cualquier base
+          var cols=detectSchema(rows[0],schema(0,sn));
           for(var i=1;i<rows.length;i++){
-            var r=rows[i];if(!r||r.length<10)continue;
-            var rut=parseInt(String(r[cols.rut]).replace(/[^0-9]/g,''))||0;
+            var r=rows[i];if(!r||!r.length)continue;
+            var rutCol=cols.rut>=0?cols.rut:-1;
+            if(rutCol<0||rutCol>=r.length)continue;
+            var rut=parseInt(String(r[rutCol]||'').replace(/[^0-9]/g,''))||0;
             if(!rut||rut<=0)continue;
-            var mu=parseFloat(r[cols.musd]),mp=parseFloat(r[cols.mpesos]);
+            var mu=cols.musd>=0&&cols.musd<r.length?parseFloat(r[cols.musd]):NaN;
+            var mp=cols.mpesos>=0&&cols.mpesos<r.length?parseFloat(r[cols.mpesos]):NaN;
             if(isNaN(mu))mu=null;if(isNaN(mp))mp=null;
+            if(mu===null&&mp===null)continue;
             DB.push({
-              folio:String(r[cols.folio]||'').trim().replace(/\.0$/,''),
-              anio:String(r[cols.anio]||'').replace(/\.0$/,'').trim(),
-              mes:String(r[cols.mes]||'').trim().toUpperCase(),
-              concepto:String(r[cols.concepto]||'').trim(),
-              periodo:cols.periodo!==null?String(r[cols.periodo]||'').trim():'',
+              folio:cols.folio>=0&&r[cols.folio]?String(r[cols.folio]).trim().replace(/\.0$/,''):'',
+              anio:cols.anio>=0&&r[cols.anio]?String(r[cols.anio]).replace(/\.0$/,'').trim():'',
+              mes:cols.mes>=0&&r[cols.mes]?String(r[cols.mes]).trim().toUpperCase():'',
+              concepto:cols.concepto>=0&&r[cols.concepto]?String(r[cols.concepto]).trim():'',
+              periodo:cols.periodo>=0&&r[cols.periodo]?String(r[cols.periodo]).trim():'',
               rut:rut,
-              dv:String(r[cols.dv]||'').trim().replace(/\.0$/,''),
-              nombres:String(r[cols.nombres]||'').trim(),
-              ap:String(r[cols.ap]||'').trim(),
-              am:String(r[cols.am]||'').trim(),
-              univ:cols.univ!==null?String(r[cols.univ]||'').trim():'',
-              instrumento:cols.instrumento!=null&&r[cols.instrumento]?String(r[cols.instrumento]||'').trim():'',
+              dv:cols.dv>=0&&r[cols.dv]?String(r[cols.dv]).trim().replace(/\.0$/,''):'',
+              nombres:cols.nombres>=0&&r[cols.nombres]?String(r[cols.nombres]).trim():'',
+              ap:cols.ap>=0&&r[cols.ap]?String(r[cols.ap]).trim():'',
+              am:cols.am>=0&&r[cols.am]?String(r[cols.am]).trim():'',
+              univ:cols.univ>=0&&r[cols.univ]?String(r[cols.univ]).trim():'',
+              instrumento:cols.instrumento>=0&&r[cols.instrumento]?String(r[cols.instrumento]).trim():'',
               musd:mu,mpesos:mp!==null?Math.round(mp):null
             });
-            cnt++;
           }
         });
         bar.style.width='100%';
@@ -843,7 +846,7 @@ function loadBase(uid,inp){
         msg.textContent='✅ '+file.name+' cargado · '+DB.length.toLocaleString('es-CL')+' registros totales';
         document.getElementById('btnS1').disabled=false;
       }catch(err){
-        document.getElementById('p1Err').textContent='Error: '+err.message;
+        document.getElementById('p1Err').textContent='Error al cargar '+file.name+': '+err.message;
         document.getElementById('p1Err').classList.remove('hidden');
         bar.style.width='0%';
       }
@@ -851,7 +854,6 @@ function loadBase(uid,inp){
   };
   reader.readAsArrayBuffer(file);
 }
-
 
 function fin1(){if(!DB.length){document.getElementById("p1Err").textContent="Carga al menos una base.";document.getElementById("p1Err").classList.remove("hidden");return;}show("p2");setStep(2);}
 
@@ -1359,15 +1361,16 @@ function loadBaseNac(uid,inp){
           var sheetYear=parseInt(sn)||null;
           for(var i=1;i<rows.length;i++){
             var r=rows[i];if(!r||r.length<4)continue;
-            var rutRaw=usedCols.rut>=0?String(r[usedCols.rut]||'').replace(/[^0-9]/g,''):'';
+            var rutRaw=usedCols.rut>=0&&usedCols.rut<r.length?String(r[usedCols.rut]||'').replace(/[^0-9]/g,''):'';
             var rut=parseInt(rutRaw)||0;if(!rut||rut<=0)continue;
-            var dv=usedCols.dv>=0?String(r[usedCols.dv]||'').trim().replace(/\.0$/,''):'';
-            if(!dv){var rv=String(usedCols.rut>=0?r[usedCols.rut]||'':'');var dm=rv.match(/-([0-9Kk])$/);if(dm)dv=dm[1].toUpperCase();}
-            var mp=usedCols.mpesos>=0?parseFloat(r[usedCols.mpesos]):NaN;if(isNaN(mp))mp=null;
-            var mu=usedCols.musd>=0?parseFloat(r[usedCols.musd]):NaN;if(isNaN(mu))mu=null;
-            var folio=usedCols.folio>=0?String(r[usedCols.folio]||'').trim().replace(/\.0$/,''):'';
-            var anio=usedCols.anio>=0?String(r[usedCols.anio]||'').replace(/\.0$/,'').trim():(sheetYear?String(sheetYear):'');
-            var mes=String(r[usedCols.mes]||'').trim().toUpperCase();if(!mes)continue;
+            var dv=usedCols.dv>=0&&usedCols.dv<r.length?String(r[usedCols.dv]||'').trim().replace(/\.0$/,''):'';
+            if(!dv){var rv=usedCols.rut>=0?String(r[usedCols.rut]||''):'';var dm=rv.match(/-([0-9Kk])$/);if(dm)dv=dm[1].toUpperCase();}
+            var mp=usedCols.mpesos>=0&&usedCols.mpesos<r.length?parseFloat(r[usedCols.mpesos]):NaN;if(isNaN(mp))mp=null;
+            var mu=usedCols.musd>=0&&usedCols.musd<r.length?parseFloat(r[usedCols.musd]):NaN;if(isNaN(mu))mu=null;
+            if(mp===null&&mu===null)continue;
+            var folio=usedCols.folio>=0&&usedCols.folio<r.length?String(r[usedCols.folio]||'').trim().replace(/\.0$/,''):'';
+            var anio=usedCols.anio>=0&&usedCols.anio<r.length?String(r[usedCols.anio]||'').replace(/\.0$/,'').trim():(sheetYear?String(sheetYear):'');
+            var mes=String(usedCols.mes>=0&&usedCols.mes<r.length?r[usedCols.mes]||'':'').trim().toUpperCase();if(!mes)continue;
             DBnac.push({
               folio:folio,anio:anio,mes:mes,
               concepto:String(r[usedCols.concepto]||'').trim(),
@@ -1636,15 +1639,16 @@ async function genExcelJSNac(sel){
 
   // Cabecera tabla — Becas Nacionales solo tienen montos en PESOS
   ws.getRow(27).height=20;ws.getRow(28).height=36.8;
-  ws.mergeCells('B27:B28');ws.mergeCells('C27:C28');ws.mergeCells('D27:H27');ws.mergeCells('E27:E28');ws.mergeCells('F27:H27');
+  ws.mergeCells('B27:B28');ws.mergeCells('C27:C28');
+  ws.mergeCells('D27:D28');ws.mergeCells('E27:E28');
   ws.mergeCells('F27:F28');ws.mergeCells('G27:G28');ws.mergeCells('H27:H28');
   var TH={bold:true,size:9,border:BALL,align:'center',wrap:true};
   sc(27,2,'MES DE PAGO',TH);sc(27,3,'AÑO',TH);
-  sc(27,4,'Detalle / Concepto',{bold:false,size:11,border:BALL,align:'center',wrap:true});
+  sc(27,4,'Detalle / Concepto',TH);
   sc(27,5,'Monto Pagado $',{bold:true,size:9,border:BALL,align:'center',wrap:true,numFmt:NUM_FMT});
   sc(27,6,'',TH);sc(27,7,'',TH);
   sc(27,8,'MONTO TOTAL $ CLP',{bold:true,size:9,border:BALL,align:'center',wrap:true,numFmt:NUM_FMT});
-  [2,3,5,6,7,8].forEach(function(c){ws.getRow(28).getCell(c).border=BALL;});
+  [2,3,4,5,6,7,8].forEach(function(c){ws.getRow(28).getCell(c).border=BALL;});
   sc(28,4,'Descripción del pago',TH);
 
   // Filas de datos
