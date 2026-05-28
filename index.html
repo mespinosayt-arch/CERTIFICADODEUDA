@@ -1467,12 +1467,21 @@ function delRows(ws,ref,sr,cnt){for(var R=sr;R<=ref.e.r;R++)for(var C=ref.s.c;C<
 function insRow(ws,ref,at){for(var R=ref.e.r;R>=at;R--)for(var C=ref.s.c;C<=ref.e.c;C++){var s=XLSX.utils.encode_cell({r:R,c:C}),d=XLSX.utils.encode_cell({r:R+1,c:C});if(ws[s]){ws[d]=Object.assign({},ws[s]);delete ws[s];}else delete ws[d];}ref.e.r++;ws["!ref"]=XLSX.utils.encode_range(ref.s,ref.e);}
 function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1).toLowerCase():s;}
 function titleCase(s){if(!s)return s;return String(s).split(/\s+/).map(function(w){return w?w.charAt(0).toUpperCase()+w.slice(1).toLowerCase():w;}).join(' ');}
-// normRut: extrae cuerpo numérico del RUT sin DV. Acepta "18.406.858-3", "18406858-3", "184068583"
+// normRut: extrae cuerpo numérico del RUT sin DV.
+// Acepta "18.406.858-3", "18406858-3", "184068583" (9 dígitos = cuerpo8+DV), "18406858" (8 dígitos = solo cuerpo)
 function normRut(raw){
   var s=String(raw||'').trim().replace(/\./g,'');
-  var g=s.indexOf('-');if(g>=0)s=s.slice(0,g);
+  // Si tiene guión: quitar DV explícitamente
+  var g=s.indexOf('-');
+  if(g>=0){s=s.slice(0,g);s=s.replace(/[^0-9]/g,'');return parseInt(s)||0;}
+  // Sin guión: solo dígitos
   s=s.replace(/[^0-9]/g,'');
-  if(s.length>8)s=s.slice(0,s.length-1);
+  // Solo quitar último dígito si tiene 9+ dígitos (el DV está pegado)
+  // RUTs chilenos: cuerpo máximo 8 dígitos. 9 dígitos = cuerpo(8)+DV(1)
+  if(s.length===9)s=s.slice(0,8);
+  // 10+ dígitos: también quitar último
+  else if(s.length>9)s=s.slice(0,s.length-1);
+  // 8 o menos: es solo el cuerpo, no tocar
   return parseInt(s)||0;
 }
 // ═══════════════════════════════════════════════════════
