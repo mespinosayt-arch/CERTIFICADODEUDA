@@ -817,19 +817,49 @@ function buscarNac(){
   var errEl=document.getElementById('pn2Err');errEl.classList.add('hidden');
   if(!rutRaw&&!ff){errEl.textContent='Ingresa RUT o Folio.';errEl.classList.remove('hidden');return;}
   var rutN=rutRaw?normRut(rutRaw):null;
-  var direct=DBnac.filter(function(r){if(rutN&&r.rut===rutN)return true;if(ff&&r.folio&&r.folio===ff)return true;return false;});
+  
+  // Paso 1: filas directas del becario (por RUT o por folio)
+  var direct=DBnac.filter(function(r){
+    if(rutN&&r.rut===rutN)return true;
+    if(ff&&r.folio&&r.folio===ff)return true;
+    return false;
+  });
   if(!direct.length){errEl.textContent='No se encontraron registros para ese RUT/Folio.';errEl.classList.remove('hidden');return;}
+  
+  // Determinar el RUT real del becario (por si buscó por folio)
+  var rutBecario=rutN;
+  if(!rutBecario&&direct.length>0)rutBecario=direct[0].rut;
+  
+  // Paso 2: recoger todos los folios del becario
   var fs=new Set(direct.map(function(r){return r.folio;}).filter(Boolean));
-  var found=DBnac.filter(function(r){if(rutN&&r.rut===rutN)return true;if(fs.size&&r.folio&&fs.has(r.folio))return true;return false;});
-  var neg={};found.forEach(function(r){if((r.mpesos||0)<0){var k=Math.round(Math.abs(r.mpesos||0));neg[k]=(neg[k]||0)+1;}});
-  var filtered=[];found.forEach(function(r){if((r.mpesos||0)>0||(r.musd||0)>0){var k=Math.round(Math.abs(r.mpesos||r.musd||0));if(neg[k]>0){neg[k]--;return;}filtered.push(r);}});
+  
+  // Paso 3: expandir por folio SOLO si el RUT coincide con el becario
+  // (evita traer pagos a la institución patrocinante que comparten folio)
+  var found=DBnac.filter(function(r){
+    if(r.rut===rutBecario)return true;
+    if(fs.size&&r.folio&&fs.has(r.folio)&&r.rut===rutBecario)return true;
+    return false;
+  });
+  
+  // Cancelar reintegros negativos
+  var neg={};
+  found.forEach(function(r){if((r.mpesos||0)<0){var k=Math.round(Math.abs(r.mpesos||0));neg[k]=(neg[k]||0)+1;}});
+  var filtered=[];
+  found.forEach(function(r){
+    if((r.mpesos||0)>0||(r.musd||0)>0){
+      var k=Math.round(Math.abs(r.mpesos||r.musd||0));
+      if(neg[k]>0){neg[k]--;return;}
+      filtered.push(r);
+    }
+  });
   if(!filtered.length){errEl.textContent='No se encontraron pagos positivos.';errEl.classList.remove('hidden');return;}
+  
   var bec=direct[0];
   window._becDataNac={nombre:titleCase([bec.nombres,bec.ap,bec.am].filter(Boolean).join(' ')),rut:String(bec.rut)+(bec.dv?'-'+bec.dv:''),univ:titleCase(bec.univ||''),folio:bec.folio||''};
   var info=document.getElementById('bcNacI');
   info.innerHTML='<div class="bc-card" style="margin-top:10px;padding:10px 14px;background:var(--b2);border-radius:8px;border:1px solid var(--sl3);"><b>'+escHtml(window._becDataNac.nombre)+'</b>'+(window._becDataNac.rut?'<span style="color:var(--sl1);margin-left:10px;">RUT: '+escHtml(window._becDataNac.rut)+'</span>':'')+(window._becDataNac.univ?'<div style="font-size:.8rem;color:var(--sl1);margin-top:2px;">'+escHtml(window._becDataNac.univ)+'</div>':'')+'<div style="font-size:.78rem;color:var(--sl1);margin-top:2px;">'+filtered.length+' pagos encontrados</div></div>';
   info.classList.remove('hidden');
-  paysNac=processPaymentsNac(filtered,rutN||0);
+  paysNac=processPaymentsNac(filtered,rutBecario||0);
   renderTNac();showNac('pn3');setStepNac(3);
 }
 
