@@ -249,13 +249,16 @@ footer{text-align:center;padding:16px 0 26px;border-top:3px solid #D52B1E;margin
 <!-- P2: BUSCAR -->
 <div id="p2" class="panel hidden">
   <div class="pt">Paso 2 — Buscar Becario</div>
-  <div class="pd">Ingresa RUT (solo números sin puntos ni DV) y/o Folio. Puedes usar uno o ambos.</div>
+  <div class="pd">Ingresa el Folio de la beca. Opcionalmente puedes filtrar por RUT.</div>
   <div class="fr">
-    <div class="fg"><label>RUT sin DV</label><input type="text" id="iR" placeholder="ej: 15300584" onkeydown="if(event.key==='Enter')srch()"/></div>
     <div class="fg"><label>Folio Beca</label><input type="text" id="iF" placeholder="ej: 76180030" onkeydown="if(event.key==='Enter')srch()"/></div>
   </div>
+  <div id="rutFilterCh" style="display:none;margin-top:6px;">
+    <div class="fr"><div class="fg"><label>RUT</label><input type="text" id="iR" placeholder="ej: 15.300.584-K o 15300584" onkeydown="if(event.key==='Enter')srch()"/></div></div>
+  </div>
+  <button id="btnAddRutCh" onclick="document.getElementById('rutFilterCh').style.display='';this.style.display='none';" style="border:none;background:transparent;color:var(--blue2);cursor:pointer;font-size:.8rem;margin-top:6px;padding:2px 0;">＋ Agregar filtro por RUT</button>
   <div id="p2Err" class="ae hidden"></div>
-  <div style="display:flex;gap:7px;flex-wrap:wrap;">
+  <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;">
     <button class="btn bs bsm" onclick="back(1)">← Volver</button>
     <button class="btn bp" id="btnSrch" onclick="srch()"><span id="spSrch" class="sp hidden"></span>🔍 Buscar</button>
   </div>
@@ -383,11 +386,14 @@ footer{text-align:center;padding:16px 0 26px;border-top:3px solid #D52B1E;margin
 <!-- PN2: BUSCAR BECARIO -->
 <div id="pn2" class="panel hidden">
   <div class="pt">Paso 2 — Buscar Becario</div>
-  <div class="pd">Busca por RUT (sin puntos, sin guión) o por Folio de beca.</div>
+  <div class="pd">Ingresa el Folio de la beca. Opcionalmente puedes filtrar por RUT.</div>
   <div class="fr">
-    <div class="fg"><label>RUT (solo números)</label><input type="text" id="iRn" placeholder="ej: 12345678"/></div>
-    <div class="fg"><label>Folio beca</label><input type="text" id="iFn" placeholder="ej: 76180030"/></div>
+    <div class="fg"><label>Folio Beca</label><input type="text" id="iFn" placeholder="ej: 22240809" onkeydown="if(event.key==='Enter')buscarNac()"/></div>
   </div>
+  <div id="rutFilterNac" style="display:none;margin-top:6px;">
+    <div class="fr"><div class="fg"><label>RUT</label><input type="text" id="iRn" placeholder="ej: 19228743-K o 19228743" onkeydown="if(event.key==='Enter')buscarNac()"/></div></div>
+  </div>
+  <button id="btnAddRutNac" onclick="document.getElementById('rutFilterNac').style.display='';this.style.display='none';" style="border:none;background:transparent;color:var(--blue2);cursor:pointer;font-size:.8rem;margin-top:6px;padding:2px 0;">＋ Agregar filtro por RUT</button>
   <div id="pn2Err" class="ae hidden"></div>
   <div id="bcNacI" class="hidden"></div>
   <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;">
@@ -785,7 +791,7 @@ function switchTab(tab){var isOpc=(tab==='opc');document.getElementById('panelOp
 // DESCARGA / RESET
 // ═══════════════════════════════════════════════════════
 function dl(){if(!xlsxB)return;var blob=new Blob([xlsxB],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});var url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=gFn;a.click();URL.revokeObjectURL(url);}
-function nuevoCertificado(){pays=[];xlsxB=null;['iR','iF','iC','iE','iI'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});var bc=document.getElementById('bcI');if(bc)bc.innerHTML='';var bcW=document.getElementById('bcW');if(bcW)bcW.classList.add('hidden');var p3t=document.getElementById('tB');if(p3t)p3t.innerHTML='';window._becData=null;show('p2');setStep(2);}
+function nuevoCertificado(){pays=[];xlsxB=null;['iR','iF','iC','iE','iI'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});var bc=document.getElementById('bcI');if(bc)bc.innerHTML='';var bcW=document.getElementById('bcW');if(bcW)bcW.classList.add('hidden');var p3t=document.getElementById('tB');if(p3t)p3t.innerHTML='';window._becData=null;document.getElementById('rutFilterCh').style.display='none';document.getElementById('btnAddRutCh').style.display='';show('p2');setStep(2);}
 function resetApp(){DB=[];pays=[];xlsxB=null;ok1=false;ok2=false;ok3=false;['iR','iF','iC','iE','iI'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});var bc=document.getElementById('bcI');if(bc)bc.innerHTML='';var bcW=document.getElementById('bcW');if(bcW)bcW.classList.add('hidden');window._becData=null;chileSlots=0;document.getElementById('gridChile').innerHTML='';for(var _i=0;_i<3;_i++)addBaseSlot('chile');show('p1');setStep(1);}
 
 // ═══════════════════════════════════════════════════════
@@ -818,7 +824,7 @@ function buscarNac(){
   if(!rutRaw&&!ff){errEl.textContent='Ingresa RUT o Folio.';errEl.classList.remove('hidden');return;}
   var rutN=rutRaw?normRut(rutRaw):null;
   
-  // Paso 1: filas directas del becario (por RUT o por folio)
+  // Paso 1: filas directas (por RUT o por folio)
   var direct=DBnac.filter(function(r){
     if(rutN&&r.rut===rutN)return true;
     if(ff&&r.folio&&r.folio===ff)return true;
@@ -826,18 +832,14 @@ function buscarNac(){
   });
   if(!direct.length){errEl.textContent='No se encontraron registros para ese RUT/Folio.';errEl.classList.remove('hidden');return;}
   
-  // Determinar el RUT real del becario (por si buscó por folio)
-  var rutBecario=rutN;
-  if(!rutBecario&&direct.length>0)rutBecario=direct[0].rut;
-  
-  // Paso 2: recoger todos los folios del becario
+  // Paso 2: recoger todos los folios asociados
   var fs=new Set(direct.map(function(r){return r.folio;}).filter(Boolean));
   
-  // Paso 3: expandir por folio SOLO si el RUT coincide con el becario
-  // (evita traer pagos a la institución patrocinante que comparten folio)
+  // Paso 3: traer TODOS los registros de esos folios (incluyendo aranceles a la universidad)
+  // + todos los registros del RUT buscado (por si tiene otros folios)
   var found=DBnac.filter(function(r){
-    if(r.rut===rutBecario)return true;
-    if(fs.size&&r.folio&&fs.has(r.folio)&&r.rut===rutBecario)return true;
+    if(rutN&&r.rut===rutN)return true;
+    if(fs.size&&r.folio&&fs.has(r.folio))return true;
     return false;
   });
   
@@ -854,12 +856,18 @@ function buscarNac(){
   });
   if(!filtered.length){errEl.textContent='No se encontraron pagos positivos.';errEl.classList.remove('hidden');return;}
   
-  var bec=direct[0];
+  // Determinar datos del becario para el encabezado (el RUT con más pagos = el becario)
+  var rutCounts={};
+  filtered.forEach(function(r){rutCounts[r.rut]=(rutCounts[r.rut]||0)+1;});
+  var bestRut=0,bestCount=0;
+  Object.keys(rutCounts).forEach(function(k){if(rutCounts[k]>bestCount){bestCount=rutCounts[k];bestRut=parseInt(k);}});
+  var bec=filtered.find(function(r){return r.rut===bestRut;})||filtered[0];
+  
   window._becDataNac={nombre:titleCase([bec.nombres,bec.ap,bec.am].filter(Boolean).join(' ')),rut:String(bec.rut)+(bec.dv?'-'+bec.dv:''),univ:titleCase(bec.univ||''),folio:bec.folio||''};
   var info=document.getElementById('bcNacI');
   info.innerHTML='<div class="bc-card" style="margin-top:10px;padding:10px 14px;background:var(--b2);border-radius:8px;border:1px solid var(--sl3);"><b>'+escHtml(window._becDataNac.nombre)+'</b>'+(window._becDataNac.rut?'<span style="color:var(--sl1);margin-left:10px;">RUT: '+escHtml(window._becDataNac.rut)+'</span>':'')+(window._becDataNac.univ?'<div style="font-size:.8rem;color:var(--sl1);margin-top:2px;">'+escHtml(window._becDataNac.univ)+'</div>':'')+'<div style="font-size:.78rem;color:var(--sl1);margin-top:2px;">'+filtered.length+' pagos encontrados</div></div>';
   info.classList.remove('hidden');
-  paysNac=processPaymentsNac(filtered,rutBecario||0);
+  paysNac=processPaymentsNac(filtered,bestRut||0);
   renderTNac();showNac('pn3');setStepNac(3);
 }
 
@@ -897,7 +905,7 @@ function renderTNac(){
       +'<td><input type="text" value="'+escHtml(p.mes||'')+'" style="min-width:78px;" onchange="paysNac['+i+'].mes=this.value"/></td>'
       +'<td><input type="text" value="'+escHtml(String(p.anio||'').replace(/\.0$/,''))+'" style="min-width:46px;" onchange="paysNac['+i+'].anio=this.value"/></td>'
       +'<td><input type="text" value="'+escHtml(p.det||'')+'" style="min-width:150px;" onchange="paysNac['+i+'].det=this.value"/>'+mL+'</td>'
-      +'<td>'+(p._grp_sub?'<span style="color:var(--sl2);font-size:.7rem;">(subcategoría)</span>':'<input type="text" value="'+f2n(p.mpesos)+'" style="min-width:90px;text-align:right;" onchange="paysNac['+i+'].mpesos=parseInt(this.value.replace(/[^0-9]/g,\'\'))||0"/>')+'</td>'
+      +'<td>'+'<input type="text" value="'+f2n(p.mpesos)+'" style="min-width:90px;text-align:right;" onchange="paysNac['+i+'].mpesos=parseInt(this.value.replace(/[^0-9]/g,\'\'))||0"/></td>'
       +'<td style="'+(p._grp_sub?'color:var(--sl2);font-style:italic;font-size:.68rem;text-align:center;':'')+'">'+
         (p._grp_sub?'(combinada)':'<input type="text" value="'+f2n(p.merge_pesos)+'" style="min-width:90px;text-align:right;background:rgba(245,166,35,.08);border-color:rgba(245,166,35,.3);" onchange="paysNac['+i+'].merge_pesos=parseInt(this.value.replace(/[^0-9]/g,\'\'))||0"/>')
       +'</td>'
@@ -955,7 +963,7 @@ async function genExcelJSNac(sel){
   return await wb.xlsx.writeBuffer();
 }
 function dlNac(){if(!xlsxBnac)return;var blob=new Blob([xlsxBnac],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});var url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=gFnNac;a.click();URL.revokeObjectURL(url);}
-function nuevoCertNac(){paysNac=[];xlsxBnac=null;['iRn','iFn','iCn','iEn','iIn'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});var bc=document.getElementById('bcNacI');if(bc){bc.innerHTML='';bc.classList.add('hidden');}var tb=document.querySelector('#tBN tbody');if(tb)tb.innerHTML='';window._becDataNac=null;showNac('pn2');setStepNac(2);}
+function nuevoCertNac(){paysNac=[];xlsxBnac=null;['iRn','iFn','iCn','iEn','iIn'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});var bc=document.getElementById('bcNacI');if(bc){bc.innerHTML='';bc.classList.add('hidden');}var tb=document.querySelector('#tBN tbody');if(tb)tb.innerHTML='';window._becDataNac=null;document.getElementById('rutFilterNac').style.display='none';document.getElementById('btnAddRutNac').style.display='';showNac('pn2');setStepNac(2);}
 function resetNac(){DBnac=[];paysNac=[];xlsxBnac=null;okn1=false;okn2=false;okn3=false;['iRn','iFn','iCn','iEn','iIn'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});window._becDataNac=null;nacSlots=0;document.getElementById('gridNac').innerHTML='';for(var _i=0;_i<3;_i++)addBaseSlot('nac');showNac('pn1');setStepNac(1);}
 // Schema Nacionales
 var SN1={folio:0,anio:-1,mes:1,concepto:4,rut:7,dv:-1,nombres:11,ap:9,am:10,univ:-1,musd:-1,mpesos:6,periodo:-1};
@@ -974,7 +982,7 @@ function loadBaseNac(uid,inp){
     bar.style.width='25%';msg.textContent='Analizando estructura...';
     setTimeout(function(){
       try{
-        var wb=XLSX.read(e.target.result,{type:'array',cellDates:false,raw:true});
+        var wb=XLSX.read(e.target.result,{type:'array',cellDates:false,raw:true,dense:true});
         var sheets=wb.SheetNames.slice();
         var si=0,total=sheets.length;
         function nextSheet(){
@@ -1024,6 +1032,7 @@ function loadBaseNac(uid,inp){
                 }
               }
             }catch(se){console.warn('Hoja '+sn+':',se);}
+            try{delete wb.Sheets[sn];}catch(_e){}
             nextSheet();
           },10);
         }
@@ -1043,30 +1052,43 @@ function detectSchemaNac(headerRow){
   function has(pat){for(var i=0;i<H.length;i++)if(H[i].indexOf(pat)>=0)return true;return false;}
   function col(pat){for(var i=0;i<H.length;i++)if(H[i].indexOf(pat)>=0)return i;return -1;}
 
-  // SN3 / SC: bases 2014-2022 y 2023-2025 — misma estructura que Becas Chile
-  // Detectado por "proyecto o beca" en col 0
-  if(has('proyecto o beca')||H[0]==='proyecto o beca'){
-    return {folio:0,anio:1,mes:2,periodo:10,concepto:11,rut:13,dv:14,
-            nombres:15,ap:16,am:17,univ:24,musd:25,mpesos:27,instrumento:3};
+  // SN3 / SC: bases 2014-2022 y 2023-2025 — estructura tipo Becas Chile.
+  // Indicador clave: tiene "rut beneficiario" como columna (formato moderno).
+  if(has('rut beneficiario')){
+    // Detectar las columnas reales por nombre (robusto a variaciones)
+    return {
+      folio:col('proyecto')>=0?col('proyecto'):0,
+      anio:col('año presupuesto')>=0?col('año presupuesto'):(col('ano presupuesto')>=0?col('ano presupuesto'):1),
+      mes:col('mes de pago')>=0?col('mes de pago'):2,
+      periodo:col('período de pago')>=0?col('período de pago'):col('periodo de pago'),
+      concepto:col('concepto del pago')>=0?col('concepto del pago'):col('concepto'),
+      rut:col('rut beneficiario'),
+      dv:(function(){for(var i=0;i<H.length;i++)if(H[i]==='dv')return i;return -1;})(),
+      nombres:col('nombres'),
+      ap:col('apellido paterno'),
+      am:col('apellido materno'),
+      univ:(function(){for(var i=0;i<H.length;i++){if((H[i].indexOf('institución patrocinante')>=0||H[i].indexOf('institucion patrocinante')>=0||H[i].indexOf('universi')>=0)&&H[i].indexOf('rut')!==0&&H[i].indexOf('dv')!==0)return i;}return -1;})(),
+      musd:col('moneda extranjera'),
+      mpesos:col('monto pagado en pesos')>=0?col('monto pagado en pesos'):col('monto pagado'),
+      instrumento:col('instrumento')
+    };
   }
   // SN2: base 2009-2013 — sin folio, RUT en col 6
-  // Detectado por "mes de la transferencia" en col 0 Y no tiene col 0 = "folio"
   if(H[0].indexOf('mes de la')>=0){
     return {folio:-1,anio:-1,mes:0,concepto:3,rut:6,dv:-1,
             nombres:10,ap:8,am:9,univ:-1,musd:-1,mpesos:5,periodo:-1};
   }
   // SN1: base 2007-2008 — folio en col 0, RUT en col 7
-  // Detectado por "folio" en col 0
   if(H[0]==='folio'||H[0].indexOf('folio')===0){
     return {folio:0,anio:-1,mes:1,concepto:4,rut:7,dv:-1,
             nombres:11,ap:9,am:10,univ:-1,musd:-1,mpesos:6,periodo:-1};
   }
-  // Fallback: intentar detectar por contenido
-  return {folio:col('folio'),anio:col('año'),mes:col('mes'),concepto:col('concepto')||col('utilidad'),
-          rut:col('rut beneficiario')||col('rut'),dv:col('^dv$'),
+  // Fallback genérico
+  return {folio:col('folio'),anio:col('año'),mes:col('mes'),concepto:col('concepto')>=0?col('concepto'):col('utilidad'),
+          rut:col('rut beneficiario')>=0?col('rut beneficiario'):col('rut'),dv:-1,
           nombres:col('nombres'),ap:col('apellido paterno'),am:col('apellido materno'),
-          univ:col('institución patrocinante')||col('universidad'),
-          musd:col('moneda extranjera'),mpesos:col('monto pagado')||col('monto'),periodo:-1};
+          univ:col('institución patrocinante')>=0?col('institución patrocinante'):col('universi'),
+          musd:col('moneda extranjera'),mpesos:col('monto pagado')>=0?col('monto pagado'):col('monto'),periodo:-1};
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1116,7 +1138,7 @@ function loadBase(uid,inp){
     bar.style.width='25%';msg.textContent='Analizando estructura…';
     setTimeout(function(){
       try{
-        var wb=XLSX.read(e.target.result,{type:'array',cellDates:false,raw:true});
+        var wb=XLSX.read(e.target.result,{type:'array',cellDates:false,raw:true,dense:true});
         var sheets=wb.SheetNames.slice();
         var si=0,total=sheets.length;
         function nextSheet(){
@@ -1166,6 +1188,7 @@ function loadBase(uid,inp){
                 }
               }
             }catch(se){console.warn('Hoja '+sn+':',se);}
+            try{delete wb.Sheets[sn];}catch(_e){}
             nextSheet();
           },10);
         }
