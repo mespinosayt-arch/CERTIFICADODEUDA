@@ -938,16 +938,109 @@ function genNac(){
   }).catch(function(e){errEl.textContent='Error: '+(e&&e.message?e.message:e);errEl.classList.remove('hidden');}).then(function(){btn.disabled=false;sp.classList.add('hidden');});
 }
 async function genExcelJSNac(sel){
-  var cfg=getCfg();var nCert=document.getElementById('iCn').value.trim();var ted=document.getElementById('iEn').value.trim();var ini=document.getElementById('iIn').value.trim();var bd=window._becDataNac||{};
-  var wb=new ExcelJS.Workbook();wb.creator='ANID';var ws=wb.addWorksheet('nombre');
+  var cfg=getCfg();
+  var nCert=document.getElementById('iCn').value.trim();
+  var ted=document.getElementById('iEn').value.trim();
+  var ini=document.getElementById('iIn').value.trim();
+  var bd=window._becDataNac||{};
+  var wb=new ExcelJS.Workbook();wb.creator='ANID';
+  var ws=wb.addWorksheet('nombre');
   ws.columns=[{key:'A',width:3.57},{key:'B',width:26.14},{key:'C',width:11.14},{key:'D',width:35},{key:'E',width:18},{key:'F',width:14},{key:'G',width:14},{key:'H',width:18.43}];
-  var THIN={style:'thin',color:{argb:'FF000000'}};var BALL={top:THIN,bottom:THIN,left:THIN,right:THIN};var NUM_FMT='_-* #,##0_-;\\-* #,##0_-;_-* "-"??_-;_-@_-';
+  var THIN={style:'thin',color:{argb:'FF000000'}};
+  var BALL={top:THIN,bottom:THIN,left:THIN,right:THIN};
+  var NUM_FMT='_-* #,##0_-;\\-* #,##0_-;_-* "-"??_-;_-@_-';
   function sc(r,c,val,opts){opts=opts||{};var cell=ws.getRow(r).getCell(c);cell.value=(val===undefined||val===null||val==='')?null:val;cell.font={name:'Calibri',size:opts.size||9,bold:opts.bold||false};if(opts.border)cell.border=opts.border;if(opts.align)cell.alignment={horizontal:opts.align,vertical:'middle',wrapText:opts.wrap||false};if(opts.numFmt)cell.numFmt=opts.numFmt;return cell;}
-  var bc=document.getElementById('bcNacI');if(bc){bc.innerHTML='';bc.classList.add('hidden');}var tb=document.querySelector('#tBN tbody');if(tb)tb.innerHTML='';window._becDataNac=null;document.getElementById('rutFilterNac').style.display='none';document.getElementById('btnAddRutNac').style.display='';showNac('pn2');setStepNac(2);}
+
+  // Logo ANID
+  if(IMG0){var i0=wb.addImage({base64:IMG0,extension:'png'});ws.addImage(i0,{tl:{col:1,row:0},br:{col:5,row:8},editAs:'absolute'});}
+  for(var r=1;r<=8;r++)ws.getRow(r).height=14;ws.getRow(9).height=6;
+
+  // Título
+  ws.getRow(10).height=20;ws.mergeCells('B10:F10');
+  sc(10,2,cfg.titulo||'CERTIFICADO DE CALCULO DE DEUDA DE BECARIO',{bold:true,size:12,align:'center'});
+  ws.getRow(11).height=16;ws.mergeCells('B11:F11');
+  sc(11,2,nCert?'N° '+nCert:'',{bold:true,size:12,align:'center'});
+
+  // Encabezado
+  var HDR=[[12,'NOMBRE BECARIO:',bd.nombre],[13,'RUT:',bd.rut],[14,'BECA:',''],
+    [15,'UNIVERSIDAD / INSTITUCIÓN:',bd.univ],[16,'PROGRAMA BECA:',''],[17,'PAIS:','Chile'],
+    [18,'Folio Beca:',bd.folio],[19,'Resolución:','XX-XX-XXXX'],
+    [21,'Fecha Inicio Beca:','XX-XX-XXXX'],[22,'Fecha Término Beca:','XX-XX-XXXX'],
+    [23,'Fecha de Retorno:','XX-XX-XXXX'],[24,'Fecha de Grado:','XX-XX-XXXX']];
+  for(var r=12;r<=25;r++)ws.getRow(r).height=15.8;
+  ws.mergeCells('B19:B20');
+  HDR.forEach(function(h){sc(h[0],2,h[1],{bold:true,size:11,align:'left'});sc(h[0],3,h[2]||'',{size:11,align:'left'});});
+  ws.getRow(26).height=6;
+
+  // Cabecera tabla
+  ws.getRow(27).height=20;ws.getRow(28).height=36.8;
+  ws.mergeCells('B27:B28');ws.mergeCells('C27:C28');ws.mergeCells('D27:D28');
+  ws.mergeCells('E27:E28');ws.mergeCells('F27:F28');ws.mergeCells('G27:G28');ws.mergeCells('H27:H28');
+  var TH={bold:true,size:9,border:BALL,align:'center',wrap:true};
+  sc(27,2,'MES DE PAGO',TH);sc(27,3,'AÑO',TH);sc(27,4,'Detalle / Concepto',TH);
+  sc(27,5,'Monto Pagado $',{bold:true,size:9,border:BALL,align:'center',wrap:true,numFmt:NUM_FMT});
+  sc(27,6,'',TH);sc(27,7,'',TH);
+  sc(27,8,'MONTO TOTAL $ CLP',{bold:true,size:9,border:BALL,align:'center',wrap:true,numFmt:NUM_FMT});
+  [2,3,4,5,6,7,8].forEach(function(c){ws.getRow(28).getCell(c).border=BALL;});
+  sc(28,4,'Descripción del pago',TH);
+
+  // Filas de datos
+  var dStart=29,totPesos=0;
+  var ent=function(v){return Math.round(parseFloat(v)||0);};
+  sel.forEach(function(p,i){
+    var R=dStart+i;ws.getRow(R).height=16.5;
+    var an=String(p.anio||'').replace(/\.0$/,'').trim();
+    var bD={bold:false,size:9,border:BALL,align:'center'};
+    var bN={bold:false,size:9,border:BALL,align:'right',numFmt:NUM_FMT};
+    sc(R,2,cap(p.mes||''),bD);sc(R,3,an?parseInt(an):null,bD);
+    sc(R,4,cap(p.det||''),{bold:false,size:9,border:BALL,align:'left'});
+    if(!p._grp_sub){
+      var mp=ent(p.merge_pesos);
+      sc(R,5,ent(p.mpesos||0),bN);[6,7].forEach(function(c){sc(R,c,null,bN);});
+      sc(R,8,mp>0?mp:null,bN);if(mp>0)totPesos+=mp;
+      var n=p.merge_n||1;if(n>1)ws.mergeCells(R,8,R+n-1,8);
+    } else {
+      sc(R,5,ent(p.mpesos||0),bN);[6,7,8].forEach(function(c){sc(R,c,null,bN);});
+    }
+  });
+
+  // Fila total
+  var fT=dStart+sel.length;ws.getRow(fT).height=16.5;
+  ws.mergeCells('C'+fT+':G'+fT);
+  sc(fT,2,'MONTO TOTAL',{bold:true,size:9,border:BALL,align:'center'});
+  for(var c=3;c<=7;c++)ws.getRow(fT).getCell(c).border=BALL;
+  sc(fT,8,totPesos,{bold:true,size:9,border:BALL,align:'right',numFmt:NUM_FMT});
+
+  // Nota
+  var rNota=fT+2;ws.getRow(rNota).height=60;ws.mergeCells('B'+rNota+':H'+rNota);
+  sc(rNota,2,cfg.nota||'Nota: Los montos corresponden a pagos en pesos chilenos.',{size:9,align:'left',wrap:true});
+
+  // Santiago + fecha
+  var rSgo=rNota+3;ws.getRow(rSgo).height=15.8;
+  sc(rSgo,2,(cfg.ciudad||'Santiago')+', ',{size:9});
+  var hoy=new Date();var meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  sc(rSgo,3,hoy.getDate()+' de '+meses[hoy.getMonth()]+' de '+hoy.getFullYear(),{size:9});
+
+  // Firma
+  var rF=rSgo+8;ws.getRow(rF).height=15.8;
+  ws.mergeCells('D'+rF+':G'+rF);ws.mergeCells('D'+(rF+1)+':G'+(rF+1));ws.mergeCells('D'+(rF+2)+':G'+(rF+2));
+  sc(rF,4,cfg.firmante||'RAÚL MUÑOZ MEDINA',{bold:true,size:9,align:'center'});
+  sc(rF+1,4,cfg.cargo||'Jefe Departamento de Finanzas',{bold:true,size:9,align:'center'});
+  sc(rF+2,4,cfg.institucion||'ANID',{bold:true,size:9,align:'center'});
+
+  // Iniciales y TED
+  var rIni=rSgo+9;ws.getRow(rIni).height=15.8;
+  sc(rIni,2,ini||'XXX/XXX',{size:9});sc(rIni+1,2,'TED '+(ted||''),{size:9});
+
+  // Banner inferior
+  if(IMG1){var i1=wb.addImage({base64:IMG1,extension:'png'});ws.addImage(i1,{tl:{col:1,row:rIni+2},br:{col:8,row:rIni+4},editAs:'absolute'});}
+
+  return await wb.xlsx.writeBuffer();
+}
+
+
 function resetNac(){DBnac=[];paysNac=[];xlsxBnac=null;okn1=false;okn2=false;okn3=false;IX_RUT_N={};IX_FOLIO_N={};['iRn','iFn','iCn','iEn','iIn'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});window._becDataNac=null;nacSlots=0;document.getElementById('gridNac').innerHTML='';for(var _i=0;_i<3;_i++)addBaseSlot('nac');showNac('pn1');setStepNac(1);}
 // Schema Nacionales
-var SN1={folio:0,anio:-1,mes:1,concepto:4,rut:7,dv:-1,nombres:11,ap:9,am:10,univ:-1,musd:-1,mpesos:6,periodo:-1};
-var SN2={folio:-1,anio:-1,mes:0,concepto:3,rut:6,dv:-1,nombres:10,ap:8,am:9,univ:-1,musd:-1,mpesos:5,periodo:-1};
 
 function loadBaseNac(uid,inp){
   var file=inp.files[0];if(!file)return;
@@ -1314,7 +1407,6 @@ function updT(){
 // ═══════════════════════════════════════════════════════
 function show(id){["p1","p2","p3","p4","p5"].forEach(function(x){document.getElementById(x).classList.add("hidden");});document.getElementById(id).classList.remove("hidden");}
 function go4(){if(!pays.some(function(p){return p.sel;})){alert("Selecciona al menos un pago.");return;}show("p4");setStep(4);}
-function loadTpl(inp){var file=inp.files[0];if(!file)return;document.getElementById("fnT").textContent=file.name;document.getElementById("uzT").classList.add("ok");var r=new FileReader();r.onload=function(e){tplAB=e.target.result;};r.readAsArrayBuffer(file);}
 
 // ═══════════════════════════════════════════════════════
 // GENERAR CERTIFICADO (con MERGE en columna MONTO USD)
@@ -1499,16 +1591,10 @@ async function genExcelJS(sel){
   return out;
 }
 // Helpers ExcelJS
-function cvE(ws,R,C){try{var v=ws.getRow(R).getCell(C).value;if(v===null||v===undefined)return "";if(typeof v==="object"){if(v.richText)return v.richText.map(function(t){return t.text;}).join("");if(v.text)return v.text;if(v.result!=null)return String(v.result);if(v.formula)return "";return "";}return String(v);}catch(e){return "";}}
-function colLetter(C){var s="";while(C>0){var m=(C-1)%26;s=String.fromCharCode(65+m)+s;C=Math.floor((C-1)/26);}return s;}
 
 // ═══════════════════════════════════════════════════════
 // XLSX HELPERS
 // ═══════════════════════════════════════════════════════
-function cv(ws,R,C){var a=XLSX.utils.encode_cell({r:R,c:C});return ws[a]&&ws[a].v!=null?String(ws[a].v):"";}
-function sc(ws,R,C,v,t,style){if(v==null||v===""){if(style!=null){var a0=XLSX.utils.encode_cell({r:R,c:C});if(ws[a0])ws[a0].s=style;}return;}var a=XLSX.utils.encode_cell({r:R,c:C});var prev=ws[a];var st=(style!=null)?style:(prev&&prev.s!=null?prev.s:undefined);if(t==="n")ws[a]={t:"n",v:parseFloat(v),w:String(v)};else ws[a]={t:"s",v:String(v),w:String(v)};if(st!=null)ws[a].s=st;}
-function delRows(ws,ref,sr,cnt){for(var R=sr;R<=ref.e.r;R++)for(var C=ref.s.c;C<=ref.e.c;C++){var d=XLSX.utils.encode_cell({r:R,c:C}),s=XLSX.utils.encode_cell({r:R+cnt,c:C});if(ws[s])ws[d]=Object.assign({},ws[s]);else delete ws[d];}for(var R=ref.e.r-cnt+1;R<=ref.e.r;R++)for(var C=ref.s.c;C<=ref.e.c;C++)delete ws[XLSX.utils.encode_cell({r:R,c:C})];ref.e.r-=cnt;ws["!ref"]=XLSX.utils.encode_range(ref.s,ref.e);}
-function insRow(ws,ref,at){for(var R=ref.e.r;R>=at;R--)for(var C=ref.s.c;C<=ref.e.c;C++){var s=XLSX.utils.encode_cell({r:R,c:C}),d=XLSX.utils.encode_cell({r:R+1,c:C});if(ws[s]){ws[d]=Object.assign({},ws[s]);delete ws[s];}else delete ws[d];}ref.e.r++;ws["!ref"]=XLSX.utils.encode_range(ref.s,ref.e);}
 function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1).toLowerCase():s;}
 function titleCase(s){if(!s)return s;return String(s).split(/\s+/).map(function(w){return w?w.charAt(0).toUpperCase()+w.slice(1).toLowerCase():w;}).join(' ');}
 // normRut: extrae cuerpo numérico del RUT sin DV.
